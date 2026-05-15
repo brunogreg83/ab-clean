@@ -14,7 +14,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .sidebar-logo .brand { font-size: 15px; font-weight: 600; color: #1a1a18; letter-spacing: -0.01em; }
 .sidebar-logo .sub { font-size: 11px; color: #888; margin-top: 2px; }
 .nav-section { padding: 10px 0; flex: 1; }
-.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: #666; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: 0.15s; }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: #666; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: background 0.12s, color 0.12s; }
 .nav-item i { font-size: 17px; }
 .nav-item:hover { background: #f5f5f3; color: #1a1a18; }
 .nav-item.active { background: #f5f5f3; color: #1a1a18; font-weight: 500; border-left: 2px solid #1D9E75; }
@@ -25,7 +25,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .topbar { height: 52px; border-bottom: 1px solid #e8e7e0; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: #fff; }
 .topbar-title { font-size: 15px; font-weight: 600; }
 .topbar-actions { display: flex; gap: 8px; }
-.btn-primary { background: #1D9E75; color: #fff; border: none; border-radius: 8px; padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: 0.15s; }
+.btn-primary { background: #1D9E75; color: #fff; border: none; border-radius: 8px; padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
 .btn-primary:hover { background: #0F6E56; }
 .btn-ghost { background: none; border: 1px solid #ddd; border-radius: 8px; padding: 7px 12px; font-size: 13px; color: #555; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
 .btn-ghost:hover { background: #f5f5f3; }
@@ -93,20 +93,8 @@ tr:hover td { background: #fafaf8; }
 .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 18px; }
 .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
 
-/* Tabs */
-.settings-tabs { display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid #e8e7e0; }
-.settings-tab { padding: 10px 14px; font-size: 13px; background: none; border: none; cursor: pointer; color: #888; border-bottom: 2px solid transparent; transition: 0.15s; }
-.settings-tab.active { color: #1D9E75; border-bottom-color: #1D9E75; }
-
-.settings-content { display: none; }
-.settings-content.active { display: block; }
-
-.user-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e8e7e0; border-radius: 8px; margin-bottom: 8px; }
-.user-info { flex: 1; }
-.user-email { font-size: 12px; color: #666; margin-top: 4px; }
-
 /* Toast */
-.toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a18; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.2s; }
+.toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a18; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
 .toast.show { opacity: 1; }
 
 /* Pedido items */
@@ -136,7 +124,7 @@ tr:hover td { background: #fafaf8; }
     </nav>
     <div class="sidebar-user">
       <div class="u-label">Usuário</div>
-      <div class="u-name" id="current-user">Administrador</div>
+      <div class="u-name">Administrador</div>
     </div>
   </div>
 
@@ -144,7 +132,8 @@ tr:hover td { background: #fafaf8; }
     <div class="topbar">
       <div class="topbar-title" id="page-title">Dashboard</div>
       <div class="topbar-actions">
-        <button class="btn-ghost" onclick="openModal('modal-settings')"><i class="ti ti-settings"></i></button>
+        <button class="btn-ghost" title="Limpar todos os dados" onclick="resetData()"><i class="ti ti-trash"></i></button>
+        <button class="btn-ghost"><i class="ti ti-settings"></i></button>
       </div>
     </div>
 
@@ -188,7 +177,7 @@ tr:hover td { background: #fafaf8; }
       <!-- ESTOQUE -->
       <div class="screen" id="screen-estoque">
         <div style="display:flex;gap:8px;margin-bottom:18px;">
-          <button class="btn-primary" onclick="novoProdutoModal()"><i class="ti ti-plus"></i> Novo produto</button>
+          <button class="btn-primary" onclick="openModal('modal-produto')"><i class="ti ti-plus"></i> Novo produto</button>
           <input type="text" class="form-input" placeholder="Buscar produto..." style="max-width:220px;height:36px;padding:7px 11px;" oninput="filtrarProdutos(this.value)">
         </div>
         <div class="two-col">
@@ -276,12 +265,12 @@ tr:hover td { background: #fafaf8; }
       <!-- RELATÓRIOS -->
       <div class="screen" id="screen-relatorios">
         <div class="two-col">
-          <div class="report-card" onclick="relVendasCliente()"><div class="rc-icon"><i class="ti ti-chart-bar"></i></div><div class="rc-title">Vendas por cliente</div><div class="rc-desc">Ranking de clientes e volume de vendas.</div></div>
-          <div class="report-card" onclick="relMargemProduto()"><div class="rc-icon"><i class="ti ti-percentage"></i></div><div class="rc-title">Margem por produto</div><div class="rc-desc">Custo, preço e margem de cada SKU.</div></div>
-          <div class="report-card" onclick="relFluxoCaixa()"><div class="rc-icon"><i class="ti ti-cash"></i></div><div class="rc-title">Fluxo de caixa</div><div class="rc-desc">Entradas, saídas e saldo projetado.</div></div>
-          <div class="report-card" onclick="relGiroEstoque()"><div class="rc-icon"><i class="ti ti-refresh"></i></div><div class="rc-title">Giro de estoque</div><div class="rc-desc">Produtos para reposição urgente.</div></div>
-          <div class="report-card" onclick="relInadimplencia()"><div class="rc-icon"><i class="ti ti-alert-triangle" style="color:#EF9F27;"></i></div><div class="rc-title">Inadimplência</div><div class="rc-desc">Títulos vencidos e em risco.</div></div>
-          <div class="report-card"><div class="rc-icon"><i class="ti ti-truck"></i></div><div class="rc-title">Desempenho de fornecedores</div><div class="rc-desc">Prazo de entrega, qualidade e volume.</div></div>
+          <div class="report-card" onclick="relVendasCliente()"><div class="rc-icon"><i class="ti ti-chart-bar"></i></div><div class="rc-title">Vendas por cliente</div><div class="rc-desc">Ranking, volume e ticket médio por cliente no período.</div><div class="rc-cta">Gerar relatório →</div></div>
+          <div class="report-card" onclick="relMargemProduto()"><div class="rc-icon"><i class="ti ti-percentage"></i></div><div class="rc-title">Margem por produto</div><div class="rc-desc">Custo, preço de venda e margem bruta por SKU.</div><div class="rc-cta">Gerar relatório →</div></div>
+          <div class="report-card" onclick="relFluxoCaixa()"><div class="rc-icon"><i class="ti ti-cash"></i></div><div class="rc-title">Fluxo de caixa</div><div class="rc-desc">Entradas, saídas e saldo projetado.</div><div class="rc-cta">Gerar relatório →</div></div>
+          <div class="report-card" onclick="relGiroEstoque()"><div class="rc-icon"><i class="ti ti-refresh"></i></div><div class="rc-title">Giro de estoque</div><div class="rc-desc">Produtos parados, curva ABC e cobertura de dias.</div><div class="rc-cta">Gerar relatório →</div></div>
+          <div class="report-card" onclick="relInadimplencia()"><div class="rc-icon"><i class="ti ti-alert-triangle" style="color:#EF9F27;"></i></div><div class="rc-title">Inadimplência</div><div class="rc-desc">Títulos em atraso e projeção de recebimento.</div><div class="rc-cta">Gerar relatório →</div></div>
+          <div class="report-card"><div class="rc-icon"><i class="ti ti-truck"></i></div><div class="rc-title">Desempenho de fornecedores</div><div class="rc-desc">Prazo de entrega, qualidade e volume de compras.</div><div class="rc-cta">Gerar relatório →</div></div>
         </div>
         <div id="relatorio-resultado" style="margin-top:8px;"></div>
       </div>
@@ -328,7 +317,7 @@ tr:hover td { background: #fafaf8; }
 <!-- Modal Novo Produto -->
 <div class="modal-overlay" id="modal-produto">
   <div class="modal">
-    <div class="modal-title" id="modal-produto-title">Novo Produto</div>
+    <div class="modal-title">Novo Produto</div>
     <div class="form-group"><label class="form-label">Nome do produto</label><input class="form-input" id="prod-nome" placeholder="Ex: Detergente Neutro 5L"></div>
     <div class="form-group"><label class="form-label">Código</label><input class="form-input" id="prod-cod" placeholder="COD-0001"></div>
     <div class="form-group"><label class="form-label">Categoria</label><input class="form-input" id="prod-cat" placeholder="Ex: Detergentes"></div>
@@ -417,68 +406,11 @@ tr:hover td { background: #fafaf8; }
   </div>
 </div>
 
-<!-- Modal Settings -->
-<div class="modal-overlay" id="modal-settings">
-  <div class="modal" style="width:520px;">
-    <div class="modal-title">Configurações</div>
-    
-    <div class="settings-tabs">
-      <button class="settings-tab active" onclick="switchSettingsTab('usuarios')"><i class="ti ti-users"></i> Usuários</button>
-      <button class="settings-tab" onclick="switchSettingsTab('sistema')"><i class="ti ti-tools"></i> Sistema</button>
-    </div>
-
-    <!-- ABA USUÁRIOS -->
-    <div id="tab-usuarios" class="settings-content active">
-      <div class="section-title">Criar novo usuário</div>
-      <div class="form-group">
-        <label class="form-label">Nome</label>
-        <input class="form-input" id="new-user-name" placeholder="Nome completo">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input class="form-input" id="new-user-email" type="email" placeholder="email@empresa.com">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Senha</label>
-        <input class="form-input" id="new-user-password" type="password" placeholder="Mínimo 6 caracteres">
-      </div>
-      <button class="btn-primary" style="width:100%;" onclick="criarUsuario()"><i class="ti ti-plus"></i> Criar usuário</button>
-      
-      <div class="section-title" style="margin-top:18px;">Usuários cadastrados</div>
-      <div id="users-list"></div>
-    </div>
-
-    <!-- ABA SISTEMA -->
-    <div id="tab-sistema" class="settings-content">
-      <div class="section-title">Opções do sistema</div>
-      <div class="form-group">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-          <input type="checkbox" id="enable-notifications" onchange="salvarConfiguracao('enableNotifications', this.checked)">
-          <span style="font-size:13px;color:#666;">Ativar notificações</span>
-        </label>
-      </div>
-      <div class="form-group">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-          <input type="checkbox" id="auto-restore" onchange="salvarConfiguracao('autoRestore', this.checked)">
-          <span style="font-size:13px;color:#666;">Restaurar dados padrão ao carregar</span>
-        </label>
-      </div>
-      
-      <div class="section-title" style="margin-top:18px;">Dados</div>
-      <button class="btn-danger" style="width:100%;" onclick="resetarDadosPadroes()"><i class="ti ti-trash"></i> Restaurar dados padrão</button>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeModal('modal-settings')">Fechar</button>
-    </div>
-  </div>
-</div>
-
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── DADOS INICIAIS ───────────────────────────────────────────────────────
+// ─── DADOS INICIAIS ───────────────────────────────────────────────────────────
 const DADOS_INICIAIS = {
   pedidos: [
     {id:1042, data:'2026-05-10', cliente:'Limpmax Ltda', status:'Entregue', pagamento:'30 dias', itens:[{produto:'Detergente Neutro 5L',qty:12,preco:120}]},
@@ -518,21 +450,15 @@ const DADOS_INICIAIS = {
     {id:89, fornecedor:'Fornece Brasil', data:'2026-05-10', itens:3, total:5900, status:'Em trânsito', produto:'Desengordurante Ind. 5L', qty:80},
     {id:90, fornecedor:'Translog', data:'2026-05-12', itens:2, total:1200, status:'Aguardando', produto:'Álcool 70% 1L', qty:60}
   ],
-  usuarios: [
-    {id:1, nome:'Administrador', email:'admin@abchemicals.com', password:'123456', active:true}
-  ],
   nextPedidoId: 1046,
   nextProdId: 7,
   nextCliId: 6,
   nextRecId: 5,
   nextPagId: 4,
-  nextOCId: 91,
-  nextUserId: 2
+  nextOCId: 91
 };
 
-let usuarioAtual = null;
-
-// ─── PERSISTÊNCIA ────────────────────────────────────────────────────────
+// ─── PERSISTÊNCIA ─────────────────────────────────────────────────────────────
 function load(key) {
   try { return JSON.parse(localStorage.getItem('abc_'+key)); } catch(e){ return null; }
 }
@@ -546,7 +472,14 @@ function setData(key, val) {
   save(key, val);
 }
 
-// ─── UTILITÁRIOS ────────────────────────────────────────────────────────
+function resetData() {
+  if(!confirm('Apagar todos os dados e restaurar os dados de exemplo?')) return;
+  Object.keys(DADOS_INICIAIS).forEach(k => localStorage.removeItem('abc_'+k));
+  toast('Dados restaurados!');
+  renderAll();
+}
+
+// ─── UTILITÁRIOS ──────────────────────────────────────────────────────────────
 const fmt = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
 const fmtDate = d => { if(!d) return '—'; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; };
 const today = () => new Date().toISOString().split('T')[0];
@@ -589,12 +522,11 @@ function totalPedido(pedido) {
   return pedido.itens.reduce((s,i) => s + (i.qty * i.preco), 0);
 }
 
-// ─── MODAIS ──────────────────────────────────────────────────────────
+// ─── MODAIS ───────────────────────────────────────────────────────────────────
 function openModal(id) {
   if(id === 'modal-pedido') preenchePedidoModal();
   if(id === 'modal-receber') preencheReceber();
   if(id === 'modal-oc') preencheOC();
-  if(id === 'modal-settings') carregarSettings();
   document.getElementById(id).classList.add('open');
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -602,142 +534,8 @@ document.querySelectorAll('.modal-overlay').forEach(el => {
   el.addEventListener('click', e => { if(e.target === el) el.classList.remove('open'); });
 });
 
-// ─── GERENCIAMENTO DE USUÁRIOS ───────────────────────────────────────────────────────
-function criarUsuario() {
-  const nome = document.getElementById('new-user-name').value.trim();
-  const email = document.getElementById('new-user-email').value.trim();
-  const password = document.getElementById('new-user-password').value;
-  
-  if(!nome) { toast('Digite o nome do usuário'); return; }
-  if(!email) { toast('Digite o email'); return; }
-  if(password.length < 6) { toast('Senha deve ter no mínimo 6 caracteres'); return; }
-  
-  const usuarios = getData('usuarios');
-  if(usuarios.some(u => u.email === email)) { toast('Email já cadastrado'); return; }
-  
-  const nextId = getData('nextUserId');
-  usuarios.push({
-    id: nextId,
-    nome,
-    email,
-    password,
-    active: true
-  });
-  
-  setData('usuarios', usuarios);
-  setData('nextUserId', nextId + 1);
-  
-  document.getElementById('new-user-name').value = '';
-  document.getElementById('new-user-email').value = '';
-  document.getElementById('new-user-password').value = '';
-  
-  toast('Usuário ' + nome + ' criado com sucesso!');
-  renderizarUsuarios();
-}
-
-function renderizarUsuarios() {
-  const usuarios = getData('usuarios');
-  const listDiv = document.getElementById('users-list');
-  
-  if(!usuarios.length) {
-    listDiv.innerHTML = '<div class="empty-state">Nenhum usuário cadastrado</div>';
-    return;
-  }
-  
-  listDiv.innerHTML = usuarios.map(u => `
-    <div class="user-item">
-      <div class="user-info">
-        <div style="font-weight:500;">${u.nome}</div>
-        <div class="user-email">${u.email}</div>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn-primary" style="padding:5px 12px;font-size:12px;" onclick="logarComoUsuario(${u.id})">Usar</button>
-        <button class="btn-danger" onclick="deletarUsuario(${u.id})">✕</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function logarComoUsuario(userId) {
-  const usuarios = getData('usuarios');
-  const usuario = usuarios.find(u => u.id === userId);
-  if(usuario) {
-    usuarioAtual = usuario;
-    document.getElementById('current-user').textContent = usuario.nome;
-    closeModal('modal-settings');
-    toast('Logado como ' + usuario.nome);
-  }
-}
-
-function deletarUsuario(userId) {
-  if(!confirm('Tem certeza que deseja deletar este usuário?')) return;
-  const usuarios = getData('usuarios').filter(u => u.id !== userId);
-  setData('usuarios', usuarios);
-  toast('Usuário deletado');
-  renderizarUsuarios();
-}
-
-// ─── CONFIGURAÇÕES DO SISTEMA ───────────────────────────────────────────────────────
-function carregarSettings() {
-  renderizarUsuarios();
-  
-  const config = load('config') || {};
-  document.getElementById('enable-notifications').checked = config.enableNotifications ?? true;
-  document.getElementById('auto-restore').checked = config.autoRestore ?? false;
-}
-
-function salvarConfiguracao(key, value) {
-  const config = load('config') || {};
-  config[key] = value;
-  save('config', config);
-  toast('Configuração salva');
-}
-
-function resetarDadosPadroes() {
-  if(!confirm('Isso restaurará todos os dados padrões. Continuar?')) return;
-  Object.keys(DADOS_INICIAIS).forEach(k => localStorage.removeItem('abc_'+k));
-  toast('Dados restaurados aos padrões');
-  location.reload();
-}
-
-function switchSettingsTab(tab) {
-  document.querySelectorAll('.settings-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.settings-tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  event.target.classList.add('active');
-}
-
-// ─── PEDIDOS ──────────────────────────────────────────────────────────
+// ─── PEDIDOS ──────────────────────────────────────────────────────────────────
 let pedidoItens = [];
-
-// ─── ESTADO EDIÇÃO PRODUTO ────────────────────────────────────────────────────
-let editingProdId = null;
-
-function novoProdutoModal() {
-  editingProdId = null;
-  document.getElementById('modal-produto-title').textContent = 'Novo Produto';
-  ['prod-nome','prod-cod','prod-cat'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('prod-estoque').value = 0;
-  document.getElementById('prod-minimo').value = 10;
-  document.getElementById('prod-preco').value = 0;
-  document.getElementById('prod-custo').value = 0;
-  openModal('modal-produto');
-}
-
-function editarProduto(id) {
-  const p = getData('produtos').find(p => p.id === id);
-  if (!p) return;
-  editingProdId = id;
-  document.getElementById('modal-produto-title').textContent = 'Editar Produto';
-  document.getElementById('prod-nome').value = p.nome;
-  document.getElementById('prod-cod').value = p.cod;
-  document.getElementById('prod-cat').value = p.categoria;
-  document.getElementById('prod-estoque').value = p.estoque;
-  document.getElementById('prod-minimo').value = p.minimo;
-  document.getElementById('prod-preco').value = p.preco;
-  document.getElementById('prod-custo').value = p.custo;
-  openModal('modal-produto');
-}
 
 function preenchePedidoModal() {
   pedidoItens = [];
@@ -762,6 +560,7 @@ function addItemPedido() {
     <input type="number" class="form-input" style="max-width:100px;" placeholder="Preço" id="ped-preco-${idx}" onchange="updateItemPedido(${idx},'preco',+this.value)">
     <button class="btn-danger" onclick="removeItemPedido(${idx})">✕</button>`;
   document.getElementById('ped-itens').appendChild(div);
+  // auto preenche produto e preço
   const first = produtos[0];
   if(first) {
     pedidoItens[idx].produto = first.nome;
@@ -838,39 +637,25 @@ function exportarPedidos() {
   a.click();
 }
 
-// ─── PRODUTOS / ESTOQUE ──────────────────────────────────────────────────────
+// ─── PRODUTOS / ESTOQUE ───────────────────────────────────────────────────────
 function salvarProduto() {
   const produtos = getData('produtos');
-  const campos = {
-    cod: document.getElementById('prod-cod').value,
+  const nextId = getData('nextProdId');
+  produtos.push({
+    id: nextId,
+    cod: document.getElementById('prod-cod').value || 'COD-'+String(nextId).padStart(4,'0'),
     nome: document.getElementById('prod-nome').value,
     categoria: document.getElementById('prod-cat').value,
     estoque: +document.getElementById('prod-estoque').value,
     minimo: +document.getElementById('prod-minimo').value,
     preco: +document.getElementById('prod-preco').value,
     custo: +document.getElementById('prod-custo').value
-  };
-  if (editingProdId !== null) {
-    const idx = produtos.findIndex(p => p.id === editingProdId);
-    if (idx !== -1) {
-      campos.cod = campos.cod || produtos[idx].cod;
-      produtos[idx] = { ...produtos[idx], ...campos };
-    }
-    editingProdId = null;
-    setData('produtos', produtos);
-    closeModal('modal-produto');
-    toast('Produto atualizado!');
-  } else {
-    const nextId = getData('nextProdId');
-    campos.id = nextId;
-    campos.cod = campos.cod || 'COD-' + String(nextId).padStart(4, '0');
-    produtos.push(campos);
-    setData('produtos', produtos);
-    setData('nextProdId', nextId + 1);
-    closeModal('modal-produto');
-    ['prod-nome','prod-cod','prod-cat'].forEach(id => document.getElementById(id).value = '');
-    toast('Produto cadastrado!');
-  }
+  });
+  setData('produtos', produtos);
+  setData('nextProdId', nextId + 1);
+  closeModal('modal-produto');
+  ['prod-nome','prod-cod','prod-cat'].forEach(id => document.getElementById(id).value='');
+  toast('Produto cadastrado!');
   renderAll();
 }
 
@@ -892,6 +677,7 @@ function renderEstoque() {
   const produtos = getData('produtos');
   const alertas = produtos.filter(p => situacaoEstoque(p.estoque, p.minimo) !== 'OK');
   
+  // alertas card
   const alertDiv = document.getElementById('estoque-alertas');
   alertDiv.innerHTML = alertas.length ? alertas.map(p => `
     <div class="stock-item">
@@ -900,24 +686,26 @@ function renderEstoque() {
       ${badge(situacaoEstoque(p.estoque,p.minimo))}
     </div>`).join('') : '<div class="empty-state" style="padding:16px;">Nenhum alerta de estoque!</div>';
 
+  // resumo
   const valorTotal = produtos.reduce((s,p) => s + p.estoque * p.custo, 0);
   document.getElementById('estoque-resumo').innerHTML = `
     <div class="stat-row"><span class="stat-key">Total de SKUs</span><span class="stat-val">${produtos.length}</span></div>
     <div class="stat-row"><span class="stat-key">Valor total em estoque</span><span class="stat-val">${fmt(valorTotal)}</span></div>
     <div class="stat-row"><span class="stat-key">Em alerta de estoque</span><span class="stat-val" style="color:#D85A30;">${alertas.length} itens</span></div>`;
 
+  // tabela
   const tbody = document.getElementById('tabela-estoque');
   tbody.innerHTML = produtos.map(p => {
     const sit = situacaoEstoque(p.estoque, p.minimo);
     return `<tr>
       <td>${p.cod}</td><td>${p.nome}</td><td>${p.categoria}</td>
       <td>${p.estoque}</td><td>${p.minimo}</td><td>${badge(sit)}</td>
-      <td><button class="btn-ghost" onclick="editarProduto(${p.id})">Editar</button> <button class="btn-danger" onclick="deleteProduto(${p.id})">Excluir</button></td>
+      <td><button class="btn-danger" onclick="deleteProduto(${p.id})">Excluir</button></td>
     </tr>`;
   }).join('');
 }
 
-// ─── CLIENTES ─────────────────────────────────────────────────────────
+// ─── CLIENTES ─────────────────────────────────────────────────────────────────
 function salvarCliente() {
   const clientes = getData('clientes');
   const nextId = getData('nextCliId');
@@ -972,7 +760,7 @@ function renderClientes() {
   }).join('');
 }
 
-// ─── FINANCEIRO ─────────────────────────────────────────────────────────
+// ─── FINANCEIRO ───────────────────────────────────────────────────────────────
 function preencheReceber() {
   const sel = document.getElementById('rec-cliente');
   sel.innerHTML = getData('clientes').map(c=>`<option>${c.nome}</option>`).join('');
@@ -1047,7 +835,7 @@ function renderFinanceiro() {
   }).join('') || '<tr><td colspan="5"><div class="empty-state">Nenhuma conta.</div></td></tr>';
 }
 
-// ─── COMPRAS ──────────────────────────────────────────────────────────
+// ─── COMPRAS ──────────────────────────────────────────────────────────────────
 function preencheOC() {
   const sel = document.getElementById('oc-produto');
   sel.innerHTML = getData('produtos').map(p=>`<option>${p.nome}</option>`).join('');
@@ -1069,6 +857,7 @@ function salvarOC() {
     produto: prodNome,
     qty
   });
+  // Se recebido, atualiza estoque
   if(status === 'Recebido') {
     const produtos = getData('produtos');
     const p = produtos.find(p => p.nome === prodNome);
@@ -1119,7 +908,7 @@ function abrirOCProduto(nome) {
   openModal('modal-oc');
 }
 
-// ─── DASHBOARD ─────────────────────────────────────────────────────────
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function renderDashboard() {
   const pedidos = getData('pedidos');
   const produtos = getData('produtos');
@@ -1137,7 +926,7 @@ function renderDashboard() {
     <div class="kpi-card"><div class="kpi-label">Itens em alerta</div><div class="kpi-value">${alertas.length}</div><div class="kpi-delta" style="color:#D85A30;">Estoque mínimo atingido</div></div>`;
 
   const ultimos = pedidos.slice(0,4);
-  document.getElementById('dash-pedidos').innerHTML = ultimos.map(p=>`<tr><td>#${p.id}</td><td>${p.cliente}</td><td>${badge(p.status)}</td></tr>`).join('') || '<tr><td colspan="3"><div class="empty-state">Nenhum pedido.</div></td></tr>';
+  document.getElementById('dash-pedidos').innerHTML = ultimos.map(p=>`<tr><td>#${p.id}</td><td>${p.cliente}</td><td>${badge(p.status)}</td></tr>`).join('') || '<tr><td colspan="3"><div class="empty-state">Sem pedidos.</div></td></tr>';
 
   const alertDiv = document.getElementById('dash-alertas');
   alertDiv.innerHTML = '<div class="section-title">Alertas do sistema</div>';
@@ -1147,7 +936,7 @@ function renderDashboard() {
   if(!criticos.length && !baixos.length && !vencendo.length) {
     alertDiv.innerHTML += '<div class="empty-state">Nenhum alerta no momento!</div>';
   }
-  criticos.forEach(p=>{ alertDiv.innerHTML += `<div class="alert-box alert-danger"><i class="ti ti-alert-circle"></i>&nbsp; ${p.nome} — apenas ${p.estoque} unidade(s) restante(s). Reposição urgente!</div>`; });
+  criticos.forEach(p=>{ alertDiv.innerHTML += `<div class="alert-box alert-danger"><i class="ti ti-alert-circle"></i>&nbsp; ${p.nome} — apenas ${p.estoque} unidade(s) restante(s). Reposição urgente.</div>`; });
   baixos.forEach(p=>{ alertDiv.innerHTML += `<div class="alert-box alert-warn"><i class="ti ti-alert-triangle"></i>&nbsp; ${p.nome} — estoque em ${p.estoque} unid. (mínimo: ${p.minimo}).</div>`; });
   if(vencendo.length) alertDiv.innerHTML += `<div class="alert-box alert-warn"><i class="ti ti-alert-triangle"></i>&nbsp; ${vencendo.length} título(s) a receber vencem nos próximos 3 dias.</div>`;
 }
@@ -1156,6 +945,7 @@ function renderBarChart() {
   const pedidos = getData('pedidos');
   const months = ['Nov','Dez','Jan','Fev','Mar','Abr','Mai'];
   const vals = [52000,61000,48000,74000,69000,76000,0];
+  // soma pedidos no mês atual
   vals[6] = pedidos.filter(p=>p.status==='Entregue').reduce((s,p)=>s+totalPedido(p),0) || 84200;
   const max = Math.max(...vals);
   const chart = document.getElementById('bar-chart');
@@ -1165,24 +955,87 @@ function renderBarChart() {
     const wrap = document.createElement('div');
     wrap.className = 'bar-wrap';
     const bar = document.createElement('div');
-    bar.className = 'bar' + (i === 6 ? ' hi' : '');
-    bar.style.height = pct + '%';
-    wrap.appendChild(bar);
+    bar.className = 'bar'+(i===6?' hi':'');
+    bar.style.height = pct+'%';
     const lbl = document.createElement('div');
     lbl.className = 'bar-lbl';
     lbl.textContent = m;
-    wrap.appendChild(lbl);
+    wrap.appendChild(bar); wrap.appendChild(lbl);
     chart.appendChild(wrap);
   });
 }
 
-function goTo(screen, btn) {
+// ─── RELATÓRIOS ───────────────────────────────────────────────────────────────
+function showRelatorio(titulo, html) {
+  document.getElementById('rel-titulo').textContent = titulo;
+  document.getElementById('rel-conteudo').innerHTML = html;
+  openModal('modal-relatorio');
+}
+
+function relVendasCliente() {
+  const pedidos = getData('pedidos');
+  const clientes = getData('clientes');
+  const mapa = {};
+  clientes.forEach(c => mapa[c.nome] = {total:0, pedidos:0});
+  pedidos.forEach(p => {
+    if(!mapa[p.cliente]) mapa[p.cliente] = {total:0,pedidos:0};
+    mapa[p.cliente].total += totalPedido(p);
+    mapa[p.cliente].pedidos++;
+  });
+  const linhas = Object.entries(mapa).sort((a,b)=>b[1].total-a[1].total).map(([nome,d],i)=>
+    `<tr><td>${i+1}º</td><td>${nome}</td><td>${d.pedidos}</td><td>${fmt(d.total)}</td><td>${d.pedidos?fmt(d.total/d.pedidos):'—'}</td></tr>`).join('');
+  showRelatorio('Vendas por cliente', `<div class="table-wrap"><table><thead><tr><th>#</th><th>Cliente</th><th>Pedidos</th><th>Total</th><th>Ticket médio</th></tr></thead><tbody>${linhas}</tbody></table></div>`);
+}
+
+function relMargemProduto() {
+  const produtos = getData('produtos');
+  const linhas = produtos.map(p => {
+    const margem = p.preco > 0 ? Math.round((p.preco-p.custo)/p.preco*100) : 0;
+    return `<tr><td>${p.nome}</td><td>${fmt(p.custo)}</td><td>${fmt(p.preco)}</td><td>${margem}%</td></tr>`;
+  }).join('');
+  showRelatorio('Margem por produto', `<div class="table-wrap"><table><thead><tr><th>Produto</th><th>Custo</th><th>Preço</th><th>Margem</th></tr></thead><tbody>${linhas}</tbody></table></div>`);
+}
+
+function relFluxoCaixa() {
+  const receber = getData('receber');
+  const pagar = getData('pagar');
+  const totalR = receber.reduce((s,r)=>s+r.valor,0);
+  const totalP = pagar.reduce((s,p)=>s+p.valor,0);
+  showRelatorio('Fluxo de caixa', `
+    <div class="stat-row"><span class="stat-key">Total a receber</span><span class="stat-val" style="color:#1D9E75;">${fmt(totalR)}</span></div>
+    <div class="stat-row"><span class="stat-key">Total a pagar</span><span class="stat-val" style="color:#D85A30;">${fmt(totalP)}</span></div>
+    <div class="stat-row"><span class="stat-key">Saldo projetado</span><span class="stat-val" style="color:${totalR-totalP>=0?'#1D9E75':'#D85A30'};font-size:16px;">${fmt(totalR-totalP)}</span></div>`);
+}
+
+function relGiroEstoque() {
+  const produtos = getData('produtos');
+  const pedidos = getData('pedidos');
+  const linhas = produtos.map(p => {
+    const vendido = pedidos.flatMap(pe=>pe.itens).filter(i=>i.produto===p.nome).reduce((s,i)=>s+i.qty,0);
+    const giro = p.estoque > 0 ? (vendido/p.estoque).toFixed(1) : '—';
+    return `<tr><td>${p.nome}</td><td>${p.estoque}</td><td>${vendido}</td><td>${giro}</td></tr>`;
+  }).join('');
+  showRelatorio('Giro de estoque', `<div class="table-wrap"><table><thead><tr><th>Produto</th><th>Estoque</th><th>Vendido</th><th>Giro</th></tr></thead><tbody>${linhas}</tbody></table></div>`);
+}
+
+function relInadimplencia() {
+  const receber = getData('receber');
+  const vencidos = receber.filter(r=>daysUntil(r.vencimento)<0);
+  const total = vencidos.reduce((s,r)=>s+r.valor,0);
+  const linhas = vencidos.map(r=>`<tr><td>${r.cliente}</td><td>${fmtDate(r.vencimento)}</td><td>${fmt(r.valor)}</td><td>${Math.abs(daysUntil(r.vencimento))} dias</td></tr>`).join('');
+  showRelatorio('Inadimplência', vencidos.length
+    ? `<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Vencimento</th><th>Valor</th><th>Atraso</th></tr></thead><tbody>${linhas}</tbody></table></div><div class="stat-row"><span class="stat-key">Total em atraso</span><span class="stat-val" style="color:#D85A30;">${fmt(total)}</span></div>`
+    : '<div class="empty-state" style="padding:24px;">Nenhum título em atraso!</div>');
+}
+
+// ─── NAVEGAÇÃO ────────────────────────────────────────────────────────────────
+const titles = {dashboard:'Dashboard',vendas:'Vendas e Pedidos',estoque:'Estoque e Produtos',clientes:'Clientes e CRM',financeiro:'Financeiro e Faturamento',compras:'Compras e Fornecedores',relatorios:'Relatórios'};
+function goTo(id, btn) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-'+screen).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
   btn.classList.add('active');
-  const titles = {dashboard:'Dashboard', vendas:'Vendas e Pedidos', estoque:'Estoque e Produtos', clientes:'Clientes e CRM', financeiro:'Financeiro', compras:'Compras', relatorios:'Relatórios'};
-  document.getElementById('page-title').textContent = titles[screen];
+  document.getElementById('page-title').textContent = titles[id];
   renderAll();
 }
 
@@ -1196,77 +1049,8 @@ function renderAll() {
   renderCompras();
 }
 
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 renderAll();
-
-// ─── RELATÓRIOS ─────────────────────────────────────────────────────────
-function relVendasCliente() {
-  const pedidos = getData('pedidos');
-  const map = {};
-  pedidos.forEach(p => {
-    if(!map[p.cliente]) map[p.cliente] = 0;
-    map[p.cliente] += totalPedido(p);
-  });
-  const sorted = Object.entries(map).sort((a,b) => b[1] - a[1]);
-  let html = '<table style="width:100%;"><tr><th>Cliente</th><th>Total</th></tr>';
-  sorted.forEach(([c,v]) => { html += `<tr><td>${c}</td><td>${fmt(v)}</td></tr>`; });
-  html += '</table>';
-  document.getElementById('rel-titulo').textContent = 'Vendas por Cliente';
-  document.getElementById('rel-conteudo').innerHTML = html;
-  openModal('modal-relatorio');
-}
-
-function relMargemProduto() {
-  const produtos = getData('produtos');
-  let html = '<table style="width:100%;"><tr><th>Produto</th><th>Preço</th><th>Custo</th><th>Margem</th></tr>';
-  produtos.forEach(p => {
-    const margem = p.preco - p.custo;
-    const pct = ((margem / p.preco) * 100).toFixed(1);
-    html += `<tr><td>${p.nome}</td><td>${fmt(p.preco)}</td><td>${fmt(p.custo)}</td><td>${pct}%</td></tr>`;
-  });
-  html += '</table>';
-  document.getElementById('rel-titulo').textContent = 'Margem por Produto';
-  document.getElementById('rel-conteudo').innerHTML = html;
-  openModal('modal-relatorio');
-}
-
-function relFluxoCaixa() {
-  const receber = getData('receber');
-  const pagar = getData('pagar');
-  const totalRec = receber.reduce((s,r)=>s+r.valor,0);
-  const totalPag = pagar.reduce((s,p)=>s+p.valor,0);
-  const saldo = totalRec - totalPag;
-  const html = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div style="background:#f0f0f0;padding:16px;border-radius:8px;"><div style="font-size:12px;color:#666;">Total a Receber</div><div style="font-size:24px;font-weight:600;margin-top:8px;">${fmt(totalRec)}</div></div>
-      <div style="background:#f0f0f0;padding:16px;border-radius:8px;"><div style="font-size:12px;color:#666;">Total a Pagar</div><div style="font-size:24px;font-weight:600;margin-top:8px;">${fmt(totalPag)}</div></div>
-      <div style="background:#f0f0f0;padding:16px;border-radius:8px;grid-column:1/-1;"><div style="font-size:12px;color:#666;">Saldo Projetado</div><div style="font-size:28px;font-weight:600;margin-top:8px;color:${saldo>=0?'#1D9E75':'#D85A30'}">${fmt(saldo)}</div></div>
-    </div>`;
-  document.getElementById('rel-titulo').textContent = 'Fluxo de Caixa';
-  document.getElementById('rel-conteudo').innerHTML = html;
-  openModal('modal-relatorio');
-}
-
-function relGiroEstoque() {
-  const produtos = getData('produtos');
-  const alertas = produtos.filter(p => situacaoEstoque(p.estoque, p.minimo) !== 'OK');
-  let html = '<table style="width:100%;"><tr><th>Produto</th><th>Estoque</th><th>Mínimo</th><th>Status</th></tr>';
-  alertas.forEach(p => { html += `<tr><td>${p.nome}</td><td>${p.estoque}</td><td>${p.minimo}</td><td>${badge(situacaoEstoque(p.estoque, p.minimo))}</td></tr>`; });
-  html += '</table>';
-  document.getElementById('rel-titulo').textContent = 'Giro de Estoque';
-  document.getElementById('rel-conteudo').innerHTML = html;
-  openModal('modal-relatorio');
-}
-
-function relInadimplencia() {
-  const receber = getData('receber');
-  const vencidos = receber.filter(r => daysUntil(r.vencimento) < 0);
-  let html = '<table style="width:100%;"><tr><th>Cliente</th><th>Vencimento</th><th>Valor</th><th>Dias</th></tr>';
-  vencidos.forEach(r => { html += `<tr><td>${r.cliente}</td><td>${fmtDate(r.vencimento)}</td><td>${fmt(r.valor)}</td><td style="color:#D85A30;">${Math.abs(daysUntil(r.vencimento))} dias</td></tr>`; });
-  html += '</table>';
-  document.getElementById('rel-titulo').textContent = 'Inadimplência';
-  document.getElementById('rel-conteudo').innerHTML = html || '<div class="empty-state">Nenhum título vencido.</div>';
-  openModal('modal-relatorio');
-}
 </script>
 </body>
 </html>
