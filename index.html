@@ -93,6 +93,18 @@ tr:hover td { background: #fafaf8; }
 .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 18px; }
 .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
 
+/* Tabs */
+.settings-tabs { display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid #e8e7e0; }
+.settings-tab { padding: 10px 14px; font-size: 13px; background: none; border: none; cursor: pointer; color: #888; border-bottom: 2px solid transparent; transition: 0.15s; }
+.settings-tab.active { color: #1D9E75; border-bottom-color: #1D9E75; }
+
+.settings-content { display: none; }
+.settings-content.active { display: block; }
+
+.user-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e8e7e0; border-radius: 8px; margin-bottom: 8px; }
+.user-info { flex: 1; }
+.user-email { font-size: 12px; color: #666; margin-top: 4px; }
+
 /* Toast */
 .toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a18; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.2s; }
 .toast.show { opacity: 1; }
@@ -124,7 +136,7 @@ tr:hover td { background: #fafaf8; }
     </nav>
     <div class="sidebar-user">
       <div class="u-label">Usuário</div>
-      <div class="u-name">Administrador</div>
+      <div class="u-name" id="current-user">Administrador</div>
     </div>
   </div>
 
@@ -132,7 +144,7 @@ tr:hover td { background: #fafaf8; }
     <div class="topbar">
       <div class="topbar-title" id="page-title">Dashboard</div>
       <div class="topbar-actions">
-        <button class="btn-ghost"><i class="ti ti-settings"></i></button>
+        <button class="btn-ghost" onclick="openModal('modal-settings')"><i class="ti ti-settings"></i></button>
       </div>
     </div>
 
@@ -405,6 +417,63 @@ tr:hover td { background: #fafaf8; }
   </div>
 </div>
 
+<!-- Modal Settings -->
+<div class="modal-overlay" id="modal-settings">
+  <div class="modal" style="width:520px;">
+    <div class="modal-title">Configurações</div>
+    
+    <div class="settings-tabs">
+      <button class="settings-tab active" onclick="switchSettingsTab('usuarios')"><i class="ti ti-users"></i> Usuários</button>
+      <button class="settings-tab" onclick="switchSettingsTab('sistema')"><i class="ti ti-tools"></i> Sistema</button>
+    </div>
+
+    <!-- ABA USUÁRIOS -->
+    <div id="tab-usuarios" class="settings-content active">
+      <div class="section-title">Criar novo usuário</div>
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input class="form-input" id="new-user-name" placeholder="Nome completo">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="new-user-email" type="email" placeholder="email@empresa.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        <input class="form-input" id="new-user-password" type="password" placeholder="Mínimo 6 caracteres">
+      </div>
+      <button class="btn-primary" style="width:100%;" onclick="criarUsuario()"><i class="ti ti-plus"></i> Criar usuário</button>
+      
+      <div class="section-title" style="margin-top:18px;">Usuários cadastrados</div>
+      <div id="users-list"></div>
+    </div>
+
+    <!-- ABA SISTEMA -->
+    <div id="tab-sistema" class="settings-content">
+      <div class="section-title">Opções do sistema</div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="enable-notifications" onchange="salvarConfiguracao('enableNotifications', this.checked)">
+          <span style="font-size:13px;color:#666;">Ativar notificações</span>
+        </label>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="auto-restore" onchange="salvarConfiguracao('autoRestore', this.checked)">
+          <span style="font-size:13px;color:#666;">Restaurar dados padrão ao carregar</span>
+        </label>
+      </div>
+      
+      <div class="section-title" style="margin-top:18px;">Dados</div>
+      <button class="btn-danger" style="width:100%;" onclick="resetarDadosPadroes()"><i class="ti ti-trash"></i> Restaurar dados padrão</button>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-settings')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -449,13 +518,19 @@ const DADOS_INICIAIS = {
     {id:89, fornecedor:'Fornece Brasil', data:'2026-05-10', itens:3, total:5900, status:'Em trânsito', produto:'Desengordurante Ind. 5L', qty:80},
     {id:90, fornecedor:'Translog', data:'2026-05-12', itens:2, total:1200, status:'Aguardando', produto:'Álcool 70% 1L', qty:60}
   ],
+  usuarios: [
+    {id:1, nome:'Administrador', email:'admin@abchemicals.com', password:'123456', active:true}
+  ],
   nextPedidoId: 1046,
   nextProdId: 7,
   nextCliId: 6,
   nextRecId: 5,
   nextPagId: 4,
-  nextOCId: 91
+  nextOCId: 91,
+  nextUserId: 2
 };
+
+let usuarioAtual = null;
 
 // ─── PERSISTÊNCIA ────────────────────────────────────────────────────────
 function load(key) {
@@ -519,12 +594,118 @@ function openModal(id) {
   if(id === 'modal-pedido') preenchePedidoModal();
   if(id === 'modal-receber') preencheReceber();
   if(id === 'modal-oc') preencheOC();
+  if(id === 'modal-settings') carregarSettings();
   document.getElementById(id).classList.add('open');
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(el => {
   el.addEventListener('click', e => { if(e.target === el) el.classList.remove('open'); });
 });
+
+// ─── GERENCIAMENTO DE USUÁRIOS ───────────────────────────────────────────────────────
+function criarUsuario() {
+  const nome = document.getElementById('new-user-name').value.trim();
+  const email = document.getElementById('new-user-email').value.trim();
+  const password = document.getElementById('new-user-password').value;
+  
+  if(!nome) { toast('Digite o nome do usuário'); return; }
+  if(!email) { toast('Digite o email'); return; }
+  if(password.length < 6) { toast('Senha deve ter no mínimo 6 caracteres'); return; }
+  
+  const usuarios = getData('usuarios');
+  if(usuarios.some(u => u.email === email)) { toast('Email já cadastrado'); return; }
+  
+  const nextId = getData('nextUserId');
+  usuarios.push({
+    id: nextId,
+    nome,
+    email,
+    password,
+    active: true
+  });
+  
+  setData('usuarios', usuarios);
+  setData('nextUserId', nextId + 1);
+  
+  document.getElementById('new-user-name').value = '';
+  document.getElementById('new-user-email').value = '';
+  document.getElementById('new-user-password').value = '';
+  
+  toast('Usuário ' + nome + ' criado com sucesso!');
+  renderizarUsuarios();
+}
+
+function renderizarUsuarios() {
+  const usuarios = getData('usuarios');
+  const listDiv = document.getElementById('users-list');
+  
+  if(!usuarios.length) {
+    listDiv.innerHTML = '<div class="empty-state">Nenhum usuário cadastrado</div>';
+    return;
+  }
+  
+  listDiv.innerHTML = usuarios.map(u => `
+    <div class="user-item">
+      <div class="user-info">
+        <div style="font-weight:500;">${u.nome}</div>
+        <div class="user-email">${u.email}</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-primary" style="padding:5px 12px;font-size:12px;" onclick="logarComoUsuario(${u.id})">Usar</button>
+        <button class="btn-danger" onclick="deletarUsuario(${u.id})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function logarComoUsuario(userId) {
+  const usuarios = getData('usuarios');
+  const usuario = usuarios.find(u => u.id === userId);
+  if(usuario) {
+    usuarioAtual = usuario;
+    document.getElementById('current-user').textContent = usuario.nome;
+    closeModal('modal-settings');
+    toast('Logado como ' + usuario.nome);
+  }
+}
+
+function deletarUsuario(userId) {
+  if(!confirm('Tem certeza que deseja deletar este usuário?')) return;
+  const usuarios = getData('usuarios').filter(u => u.id !== userId);
+  setData('usuarios', usuarios);
+  toast('Usuário deletado');
+  renderizarUsuarios();
+}
+
+// ─── CONFIGURAÇÕES DO SISTEMA ───────────────────────────────────────────────────────
+function carregarSettings() {
+  renderizarUsuarios();
+  
+  const config = load('config') || {};
+  document.getElementById('enable-notifications').checked = config.enableNotifications ?? true;
+  document.getElementById('auto-restore').checked = config.autoRestore ?? false;
+}
+
+function salvarConfiguracao(key, value) {
+  const config = load('config') || {};
+  config[key] = value;
+  save('config', config);
+  toast('Configuração salva');
+}
+
+function resetarDadosPadroes() {
+  if(!confirm('Isso restaurará todos os dados padrões. Continuar?')) return;
+  Object.keys(DADOS_INICIAIS).forEach(k => localStorage.removeItem('abc_'+k));
+  toast('Dados restaurados aos padrões');
+  location.reload();
+}
+
+function switchSettingsTab(tab) {
+  document.querySelectorAll('.settings-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.settings-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+}
 
 // ─── PEDIDOS ──────────────────────────────────────────────────────────
 let pedidoItens = [];
@@ -581,7 +762,6 @@ function addItemPedido() {
     <input type="number" class="form-input" style="max-width:100px;" placeholder="Preço" id="ped-preco-${idx}" onchange="updateItemPedido(${idx},'preco',+this.value)">
     <button class="btn-danger" onclick="removeItemPedido(${idx})">✕</button>`;
   document.getElementById('ped-itens').appendChild(div);
-  // auto preenche produto e preço
   const first = produtos[0];
   if(first) {
     pedidoItens[idx].produto = first.nome;
@@ -712,7 +892,6 @@ function renderEstoque() {
   const produtos = getData('produtos');
   const alertas = produtos.filter(p => situacaoEstoque(p.estoque, p.minimo) !== 'OK');
   
-  // alertas card
   const alertDiv = document.getElementById('estoque-alertas');
   alertDiv.innerHTML = alertas.length ? alertas.map(p => `
     <div class="stock-item">
@@ -721,14 +900,12 @@ function renderEstoque() {
       ${badge(situacaoEstoque(p.estoque,p.minimo))}
     </div>`).join('') : '<div class="empty-state" style="padding:16px;">Nenhum alerta de estoque!</div>';
 
-  // resumo
   const valorTotal = produtos.reduce((s,p) => s + p.estoque * p.custo, 0);
   document.getElementById('estoque-resumo').innerHTML = `
     <div class="stat-row"><span class="stat-key">Total de SKUs</span><span class="stat-val">${produtos.length}</span></div>
     <div class="stat-row"><span class="stat-key">Valor total em estoque</span><span class="stat-val">${fmt(valorTotal)}</span></div>
     <div class="stat-row"><span class="stat-key">Em alerta de estoque</span><span class="stat-val" style="color:#D85A30;">${alertas.length} itens</span></div>`;
 
-  // tabela
   const tbody = document.getElementById('tabela-estoque');
   tbody.innerHTML = produtos.map(p => {
     const sit = situacaoEstoque(p.estoque, p.minimo);
@@ -892,7 +1069,6 @@ function salvarOC() {
     produto: prodNome,
     qty
   });
-  // Se recebido, atualiza estoque
   if(status === 'Recebido') {
     const produtos = getData('produtos');
     const p = produtos.find(p => p.nome === prodNome);
@@ -980,7 +1156,6 @@ function renderBarChart() {
   const pedidos = getData('pedidos');
   const months = ['Nov','Dez','Jan','Fev','Mar','Abr','Mai'];
   const vals = [52000,61000,48000,74000,69000,76000,0];
-  // soma pedidos no mês atual
   vals[6] = pedidos.filter(p=>p.status==='Entregue').reduce((s,p)=>s+totalPedido(p),0) || 84200;
   const max = Math.max(...vals);
   const chart = document.getElementById('bar-chart');
@@ -1021,7 +1196,6 @@ function renderAll() {
   renderCompras();
 }
 
-// Init
 renderAll();
 
 // ─── RELATÓRIOS ─────────────────────────────────────────────────────────
