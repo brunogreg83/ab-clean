@@ -14,7 +14,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .sidebar-logo .brand { font-size: 15px; font-weight: 600; color: #1a1a18; letter-spacing: -0.01em; }
 .sidebar-logo .sub { font-size: 11px; color: #888; margin-top: 2px; }
 .nav-section { padding: 10px 0; flex: 1; }
-.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: #666; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: background 0.12s, color 0.12s; }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: #666; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: 0.15s; }
 .nav-item i { font-size: 17px; }
 .nav-item:hover { background: #f5f5f3; color: #1a1a18; }
 .nav-item.active { background: #f5f5f3; color: #1a1a18; font-weight: 500; border-left: 2px solid #1D9E75; }
@@ -25,7 +25,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .topbar { height: 52px; border-bottom: 1px solid #e8e7e0; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: #fff; }
 .topbar-title { font-size: 15px; font-weight: 600; }
 .topbar-actions { display: flex; gap: 8px; }
-.btn-primary { background: #1D9E75; color: #fff; border: none; border-radius: 8px; padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+.btn-primary { background: #1D9E75; color: #fff; border: none; border-radius: 8px; padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: 0.15s; }
 .btn-primary:hover { background: #0F6E56; }
 .btn-ghost { background: none; border: 1px solid #ddd; border-radius: 8px; padding: 7px 12px; font-size: 13px; color: #555; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
 .btn-ghost:hover { background: #f5f5f3; }
@@ -94,7 +94,7 @@ tr:hover td { background: #fafaf8; }
 .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
 
 /* Toast */
-.toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a18; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a18; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.2s; }
 .toast.show { opacity: 1; }
 
 /* Pedido items */
@@ -132,7 +132,6 @@ tr:hover td { background: #fafaf8; }
     <div class="topbar">
       <div class="topbar-title" id="page-title">Dashboard</div>
       <div class="topbar-actions">
-        <button class="btn-ghost" title="Limpar todos os dados" onclick="resetData()"><i class="ti ti-trash"></i></button>
         <button class="btn-ghost"><i class="ti ti-settings"></i></button>
       </div>
     </div>
@@ -265,12 +264,12 @@ tr:hover td { background: #fafaf8; }
       <!-- RELATÓRIOS -->
       <div class="screen" id="screen-relatorios">
         <div class="two-col">
-          <div class="report-card" onclick="relVendasCliente()"><div class="rc-icon"><i class="ti ti-chart-bar"></i></div><div class="rc-title">Vendas por cliente</div><div class="rc-desc">Ranking, volume e ticket médio por cliente no período.</div><div class="rc-cta">Gerar relatório →</div></div>
-          <div class="report-card" onclick="relMargemProduto()"><div class="rc-icon"><i class="ti ti-percentage"></i></div><div class="rc-title">Margem por produto</div><div class="rc-desc">Custo, preço de venda e margem bruta por SKU.</div><div class="rc-cta">Gerar relatório →</div></div>
-          <div class="report-card" onclick="relFluxoCaixa()"><div class="rc-icon"><i class="ti ti-cash"></i></div><div class="rc-title">Fluxo de caixa</div><div class="rc-desc">Entradas, saídas e saldo projetado.</div><div class="rc-cta">Gerar relatório →</div></div>
-          <div class="report-card" onclick="relGiroEstoque()"><div class="rc-icon"><i class="ti ti-refresh"></i></div><div class="rc-title">Giro de estoque</div><div class="rc-desc">Produtos parados, curva ABC e cobertura de dias.</div><div class="rc-cta">Gerar relatório →</div></div>
-          <div class="report-card" onclick="relInadimplencia()"><div class="rc-icon"><i class="ti ti-alert-triangle" style="color:#EF9F27;"></i></div><div class="rc-title">Inadimplência</div><div class="rc-desc">Títulos em atraso e projeção de recebimento.</div><div class="rc-cta">Gerar relatório →</div></div>
-          <div class="report-card"><div class="rc-icon"><i class="ti ti-truck"></i></div><div class="rc-title">Desempenho de fornecedores</div><div class="rc-desc">Prazo de entrega, qualidade e volume de compras.</div><div class="rc-cta">Gerar relatório →</div></div>
+          <div class="report-card" onclick="relVendasCliente()"><div class="rc-icon"><i class="ti ti-chart-bar"></i></div><div class="rc-title">Vendas por cliente</div><div class="rc-desc">Ranking de clientes e volume de vendas.</div></div>
+          <div class="report-card" onclick="relMargemProduto()"><div class="rc-icon"><i class="ti ti-percentage"></i></div><div class="rc-title">Margem por produto</div><div class="rc-desc">Custo, preço e margem de cada SKU.</div></div>
+          <div class="report-card" onclick="relFluxoCaixa()"><div class="rc-icon"><i class="ti ti-cash"></i></div><div class="rc-title">Fluxo de caixa</div><div class="rc-desc">Entradas, saídas e saldo projetado.</div></div>
+          <div class="report-card" onclick="relGiroEstoque()"><div class="rc-icon"><i class="ti ti-refresh"></i></div><div class="rc-title">Giro de estoque</div><div class="rc-desc">Produtos para reposição urgente.</div></div>
+          <div class="report-card" onclick="relInadimplencia()"><div class="rc-icon"><i class="ti ti-alert-triangle" style="color:#EF9F27;"></i></div><div class="rc-title">Inadimplência</div><div class="rc-desc">Títulos vencidos e em risco.</div></div>
+          <div class="report-card"><div class="rc-icon"><i class="ti ti-truck"></i></div><div class="rc-title">Desempenho de fornecedores</div><div class="rc-desc">Prazo de entrega, qualidade e volume.</div></div>
         </div>
         <div id="relatorio-resultado" style="margin-top:8px;"></div>
       </div>
@@ -410,7 +409,7 @@ tr:hover td { background: #fafaf8; }
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── DADOS INICIAIS ───────────────────────────────────────────────────────────
+// ─── DADOS INICIAIS ───────────────────────────────────────────────────────
 const DADOS_INICIAIS = {
   pedidos: [
     {id:1042, data:'2026-05-10', cliente:'Limpmax Ltda', status:'Entregue', pagamento:'30 dias', itens:[{produto:'Detergente Neutro 5L',qty:12,preco:120}]},
@@ -458,7 +457,7 @@ const DADOS_INICIAIS = {
   nextOCId: 91
 };
 
-// ─── PERSISTÊNCIA ─────────────────────────────────────────────────────────────
+// ─── PERSISTÊNCIA ────────────────────────────────────────────────────────
 function load(key) {
   try { return JSON.parse(localStorage.getItem('abc_'+key)); } catch(e){ return null; }
 }
@@ -472,14 +471,7 @@ function setData(key, val) {
   save(key, val);
 }
 
-function resetData() {
-  if(!confirm('Apagar todos os dados e restaurar os dados de exemplo?')) return;
-  Object.keys(DADOS_INICIAIS).forEach(k => localStorage.removeItem('abc_'+k));
-  toast('Dados restaurados!');
-  renderAll();
-}
-
-// ─── UTILITÁRIOS ──────────────────────────────────────────────────────────────
+// ─── UTILITÁRIOS ────────────────────────────────────────────────────────
 const fmt = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
 const fmtDate = d => { if(!d) return '—'; const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; };
 const today = () => new Date().toISOString().split('T')[0];
@@ -522,7 +514,7 @@ function totalPedido(pedido) {
   return pedido.itens.reduce((s,i) => s + (i.qty * i.preco), 0);
 }
 
-// ─── MODAIS ───────────────────────────────────────────────────────────────────
+// ─── MODAIS ──────────────────────────────────────────────────────────
 function openModal(id) {
   if(id === 'modal-pedido') preenchePedidoModal();
   if(id === 'modal-receber') preencheReceber();
@@ -534,7 +526,7 @@ document.querySelectorAll('.modal-overlay').forEach(el => {
   el.addEventListener('click', e => { if(e.target === el) el.classList.remove('open'); });
 });
 
-// ─── PEDIDOS ──────────────────────────────────────────────────────────────────
+// ─── PEDIDOS ──────────────────────────────────────────────────────────
 let pedidoItens = [];
 
 // ─── ESTADO EDIÇÃO PRODUTO ────────────────────────────────────────────────────
@@ -666,7 +658,7 @@ function exportarPedidos() {
   a.click();
 }
 
-// ─── PRODUTOS / ESTOQUE ───────────────────────────────────────────────────────
+// ─── PRODUTOS / ESTOQUE ──────────────────────────────────────────────────────
 function salvarProduto() {
   const produtos = getData('produtos');
   const campos = {
@@ -748,7 +740,7 @@ function renderEstoque() {
   }).join('');
 }
 
-// ─── CLIENTES ─────────────────────────────────────────────────────────────────
+// ─── CLIENTES ─────────────────────────────────────────────────────────
 function salvarCliente() {
   const clientes = getData('clientes');
   const nextId = getData('nextCliId');
@@ -803,7 +795,7 @@ function renderClientes() {
   }).join('');
 }
 
-// ─── FINANCEIRO ───────────────────────────────────────────────────────────────
+// ─── FINANCEIRO ─────────────────────────────────────────────────────────
 function preencheReceber() {
   const sel = document.getElementById('rec-cliente');
   sel.innerHTML = getData('clientes').map(c=>`<option>${c.nome}</option>`).join('');
@@ -878,7 +870,7 @@ function renderFinanceiro() {
   }).join('') || '<tr><td colspan="5"><div class="empty-state">Nenhuma conta.</div></td></tr>';
 }
 
-// ─── COMPRAS ──────────────────────────────────────────────────────────────────
+// ─── COMPRAS ──────────────────────────────────────────────────────────
 function preencheOC() {
   const sel = document.getElementById('oc-produto');
   sel.innerHTML = getData('produtos').map(p=>`<option>${p.nome}</option>`).join('');
@@ -951,7 +943,7 @@ function abrirOCProduto(nome) {
   openModal('modal-oc');
 }
 
-// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+// ─── DASHBOARD ─────────────────────────────────────────────────────────
 function renderDashboard() {
   const pedidos = getData('pedidos');
   const produtos = getData('produtos');
@@ -969,7 +961,7 @@ function renderDashboard() {
     <div class="kpi-card"><div class="kpi-label">Itens em alerta</div><div class="kpi-value">${alertas.length}</div><div class="kpi-delta" style="color:#D85A30;">Estoque mínimo atingido</div></div>`;
 
   const ultimos = pedidos.slice(0,4);
-  document.getElementById('dash-pedidos').innerHTML = ultimos.map(p=>`<tr><td>#${p.id}</td><td>${p.cliente}</td><td>${badge(p.status)}</td></tr>`).join('') || '<tr><td colspan="3"><div class="empty-state">Sem pedidos.</div></td></tr>';
+  document.getElementById('dash-pedidos').innerHTML = ultimos.map(p=>`<tr><td>#${p.id}</td><td>${p.cliente}</td><td>${badge(p.status)}</td></tr>`).join('') || '<tr><td colspan="3"><div class="empty-state">Nenhum pedido.</div></td></tr>';
 
   const alertDiv = document.getElementById('dash-alertas');
   alertDiv.innerHTML = '<div class="section-title">Alertas do sistema</div>';
@@ -979,7 +971,7 @@ function renderDashboard() {
   if(!criticos.length && !baixos.length && !vencendo.length) {
     alertDiv.innerHTML += '<div class="empty-state">Nenhum alerta no momento!</div>';
   }
-  criticos.forEach(p=>{ alertDiv.innerHTML += `<div class="alert-box alert-danger"><i class="ti ti-alert-circle"></i>&nbsp; ${p.nome} — apenas ${p.estoque} unidade(s) restante(s). Reposição urgente.</div>`; });
+  criticos.forEach(p=>{ alertDiv.innerHTML += `<div class="alert-box alert-danger"><i class="ti ti-alert-circle"></i>&nbsp; ${p.nome} — apenas ${p.estoque} unidade(s) restante(s). Reposição urgente!</div>`; });
   baixos.forEach(p=>{ alertDiv.innerHTML += `<div class="alert-box alert-warn"><i class="ti ti-alert-triangle"></i>&nbsp; ${p.nome} — estoque em ${p.estoque} unid. (mínimo: ${p.minimo}).</div>`; });
   if(vencendo.length) alertDiv.innerHTML += `<div class="alert-box alert-warn"><i class="ti ti-alert-triangle"></i>&nbsp; ${vencendo.length} título(s) a receber vencem nos próximos 3 dias.</div>`;
 }
@@ -998,87 +990,24 @@ function renderBarChart() {
     const wrap = document.createElement('div');
     wrap.className = 'bar-wrap';
     const bar = document.createElement('div');
-    bar.className = 'bar'+(i===6?' hi':'');
-    bar.style.height = pct+'%';
+    bar.className = 'bar' + (i === 6 ? ' hi' : '');
+    bar.style.height = pct + '%';
+    wrap.appendChild(bar);
     const lbl = document.createElement('div');
     lbl.className = 'bar-lbl';
     lbl.textContent = m;
-    wrap.appendChild(bar); wrap.appendChild(lbl);
+    wrap.appendChild(lbl);
     chart.appendChild(wrap);
   });
 }
 
-// ─── RELATÓRIOS ───────────────────────────────────────────────────────────────
-function showRelatorio(titulo, html) {
-  document.getElementById('rel-titulo').textContent = titulo;
-  document.getElementById('rel-conteudo').innerHTML = html;
-  openModal('modal-relatorio');
-}
-
-function relVendasCliente() {
-  const pedidos = getData('pedidos');
-  const clientes = getData('clientes');
-  const mapa = {};
-  clientes.forEach(c => mapa[c.nome] = {total:0, pedidos:0});
-  pedidos.forEach(p => {
-    if(!mapa[p.cliente]) mapa[p.cliente] = {total:0,pedidos:0};
-    mapa[p.cliente].total += totalPedido(p);
-    mapa[p.cliente].pedidos++;
-  });
-  const linhas = Object.entries(mapa).sort((a,b)=>b[1].total-a[1].total).map(([nome,d],i)=>
-    `<tr><td>${i+1}º</td><td>${nome}</td><td>${d.pedidos}</td><td>${fmt(d.total)}</td><td>${d.pedidos?fmt(d.total/d.pedidos):'—'}</td></tr>`).join('');
-  showRelatorio('Vendas por cliente', `<div class="table-wrap"><table><thead><tr><th>#</th><th>Cliente</th><th>Pedidos</th><th>Total</th><th>Ticket médio</th></tr></thead><tbody>${linhas}</tbody></table></div>`);
-}
-
-function relMargemProduto() {
-  const produtos = getData('produtos');
-  const linhas = produtos.map(p => {
-    const margem = p.preco > 0 ? Math.round((p.preco-p.custo)/p.preco*100) : 0;
-    return `<tr><td>${p.nome}</td><td>${fmt(p.custo)}</td><td>${fmt(p.preco)}</td><td>${margem}%</td></tr>`;
-  }).join('');
-  showRelatorio('Margem por produto', `<div class="table-wrap"><table><thead><tr><th>Produto</th><th>Custo</th><th>Preço</th><th>Margem</th></tr></thead><tbody>${linhas}</tbody></table></div>`);
-}
-
-function relFluxoCaixa() {
-  const receber = getData('receber');
-  const pagar = getData('pagar');
-  const totalR = receber.reduce((s,r)=>s+r.valor,0);
-  const totalP = pagar.reduce((s,p)=>s+p.valor,0);
-  showRelatorio('Fluxo de caixa', `
-    <div class="stat-row"><span class="stat-key">Total a receber</span><span class="stat-val" style="color:#1D9E75;">${fmt(totalR)}</span></div>
-    <div class="stat-row"><span class="stat-key">Total a pagar</span><span class="stat-val" style="color:#D85A30;">${fmt(totalP)}</span></div>
-    <div class="stat-row"><span class="stat-key">Saldo projetado</span><span class="stat-val" style="color:${totalR-totalP>=0?'#1D9E75':'#D85A30'};font-size:16px;">${fmt(totalR-totalP)}</span></div>`);
-}
-
-function relGiroEstoque() {
-  const produtos = getData('produtos');
-  const pedidos = getData('pedidos');
-  const linhas = produtos.map(p => {
-    const vendido = pedidos.flatMap(pe=>pe.itens).filter(i=>i.produto===p.nome).reduce((s,i)=>s+i.qty,0);
-    const giro = p.estoque > 0 ? (vendido/p.estoque).toFixed(1) : '—';
-    return `<tr><td>${p.nome}</td><td>${p.estoque}</td><td>${vendido}</td><td>${giro}</td></tr>`;
-  }).join('');
-  showRelatorio('Giro de estoque', `<div class="table-wrap"><table><thead><tr><th>Produto</th><th>Estoque</th><th>Vendido</th><th>Giro</th></tr></thead><tbody>${linhas}</tbody></table></div>`);
-}
-
-function relInadimplencia() {
-  const receber = getData('receber');
-  const vencidos = receber.filter(r=>daysUntil(r.vencimento)<0);
-  const total = vencidos.reduce((s,r)=>s+r.valor,0);
-  const linhas = vencidos.map(r=>`<tr><td>${r.cliente}</td><td>${fmtDate(r.vencimento)}</td><td>${fmt(r.valor)}</td><td>${Math.abs(daysUntil(r.vencimento))} dias</td></tr>`).join('');
-  showRelatorio('Inadimplência', vencidos.length
-    ? `<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Vencimento</th><th>Valor</th><th>Atraso</th></tr></thead><tbody>${linhas}</tbody></table></div><div class="stat-row"><span class="stat-key">Total em atraso</span><span class="stat-val" style="color:#D85A30;">${fmt(total)}</span></div>`
-    : '<div class="empty-state" style="padding:24px;">Nenhum título em atraso!</div>');
-}
-
-// ─── NAVEGAÇÃO ────────────────────────────────────────────────────────────────
-const titles = {dashboard:'Dashboard',vendas:'Vendas e Pedidos',estoque:'Estoque e Produtos',clientes:'Clientes e CRM',financeiro:'Financeiro e Faturamento',compras:'Compras e Fornecedores',relatorios:'Relatórios'};
-function goTo(id, btn) {
+function goTo(screen, btn) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('screen-'+id).classList.add('active');
+  document.getElementById('screen-'+screen).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('page-title').textContent = titles[id];
+  const titles = {dashboard:'Dashboard', vendas:'Vendas e Pedidos', estoque:'Estoque e Produtos', clientes:'Clientes e CRM', financeiro:'Financeiro', compras:'Compras', relatorios:'Relatórios'};
+  document.getElementById('page-title').textContent = titles[screen];
   renderAll();
 }
 
@@ -1092,8 +1021,78 @@ function renderAll() {
   renderCompras();
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
+// Init
 renderAll();
+
+// ─── RELATÓRIOS ─────────────────────────────────────────────────────────
+function relVendasCliente() {
+  const pedidos = getData('pedidos');
+  const map = {};
+  pedidos.forEach(p => {
+    if(!map[p.cliente]) map[p.cliente] = 0;
+    map[p.cliente] += totalPedido(p);
+  });
+  const sorted = Object.entries(map).sort((a,b) => b[1] - a[1]);
+  let html = '<table style="width:100%;"><tr><th>Cliente</th><th>Total</th></tr>';
+  sorted.forEach(([c,v]) => { html += `<tr><td>${c}</td><td>${fmt(v)}</td></tr>`; });
+  html += '</table>';
+  document.getElementById('rel-titulo').textContent = 'Vendas por Cliente';
+  document.getElementById('rel-conteudo').innerHTML = html;
+  openModal('modal-relatorio');
+}
+
+function relMargemProduto() {
+  const produtos = getData('produtos');
+  let html = '<table style="width:100%;"><tr><th>Produto</th><th>Preço</th><th>Custo</th><th>Margem</th></tr>';
+  produtos.forEach(p => {
+    const margem = p.preco - p.custo;
+    const pct = ((margem / p.preco) * 100).toFixed(1);
+    html += `<tr><td>${p.nome}</td><td>${fmt(p.preco)}</td><td>${fmt(p.custo)}</td><td>${pct}%</td></tr>`;
+  });
+  html += '</table>';
+  document.getElementById('rel-titulo').textContent = 'Margem por Produto';
+  document.getElementById('rel-conteudo').innerHTML = html;
+  openModal('modal-relatorio');
+}
+
+function relFluxoCaixa() {
+  const receber = getData('receber');
+  const pagar = getData('pagar');
+  const totalRec = receber.reduce((s,r)=>s+r.valor,0);
+  const totalPag = pagar.reduce((s,p)=>s+p.valor,0);
+  const saldo = totalRec - totalPag;
+  const html = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:#f0f0f0;padding:16px;border-radius:8px;"><div style="font-size:12px;color:#666;">Total a Receber</div><div style="font-size:24px;font-weight:600;margin-top:8px;">${fmt(totalRec)}</div></div>
+      <div style="background:#f0f0f0;padding:16px;border-radius:8px;"><div style="font-size:12px;color:#666;">Total a Pagar</div><div style="font-size:24px;font-weight:600;margin-top:8px;">${fmt(totalPag)}</div></div>
+      <div style="background:#f0f0f0;padding:16px;border-radius:8px;grid-column:1/-1;"><div style="font-size:12px;color:#666;">Saldo Projetado</div><div style="font-size:28px;font-weight:600;margin-top:8px;color:${saldo>=0?'#1D9E75':'#D85A30'}">${fmt(saldo)}</div></div>
+    </div>`;
+  document.getElementById('rel-titulo').textContent = 'Fluxo de Caixa';
+  document.getElementById('rel-conteudo').innerHTML = html;
+  openModal('modal-relatorio');
+}
+
+function relGiroEstoque() {
+  const produtos = getData('produtos');
+  const alertas = produtos.filter(p => situacaoEstoque(p.estoque, p.minimo) !== 'OK');
+  let html = '<table style="width:100%;"><tr><th>Produto</th><th>Estoque</th><th>Mínimo</th><th>Status</th></tr>';
+  alertas.forEach(p => { html += `<tr><td>${p.nome}</td><td>${p.estoque}</td><td>${p.minimo}</td><td>${badge(situacaoEstoque(p.estoque, p.minimo))}</td></tr>`; });
+  html += '</table>';
+  document.getElementById('rel-titulo').textContent = 'Giro de Estoque';
+  document.getElementById('rel-conteudo').innerHTML = html;
+  openModal('modal-relatorio');
+}
+
+function relInadimplencia() {
+  const receber = getData('receber');
+  const vencidos = receber.filter(r => daysUntil(r.vencimento) < 0);
+  let html = '<table style="width:100%;"><tr><th>Cliente</th><th>Vencimento</th><th>Valor</th><th>Dias</th></tr>';
+  vencidos.forEach(r => { html += `<tr><td>${r.cliente}</td><td>${fmtDate(r.vencimento)}</td><td>${fmt(r.valor)}</td><td style="color:#D85A30;">${Math.abs(daysUntil(r.vencimento))} dias</td></tr>`; });
+  html += '</table>';
+  document.getElementById('rel-titulo').textContent = 'Inadimplência';
+  document.getElementById('rel-conteudo').innerHTML = html || '<div class="empty-state">Nenhum título vencido.</div>';
+  openModal('modal-relatorio');
+}
 </script>
 </body>
 </html>
