@@ -49,6 +49,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .btn-ghost:hover { background: #f5f5f3; }
 .btn-danger { background: none; border: 1px solid #f5c6c6; border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #A32D2D; cursor: pointer; }
 .btn-danger:hover { background: #FCEBEB; }
+.btn-edit { background: none; border: 1px solid #c6d9f5; border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #185FA5; cursor: pointer; margin-right: 4px; }
+.btn-edit:hover { background: #E6F1FB; }
+.td-actions { display: flex; gap: 4px; white-space: nowrap; }
 .content { flex: 1; overflow-y: auto; padding: 24px; }
 .screen { display: none; }
 .screen.active { display: block; }
@@ -532,6 +535,52 @@ window.salvarPedido = async () => {
   closeModal('modal-pedido'); toast('✅ Pedido criado no Firebase!');
 };
 window.delPedido = async id => { if(!confirm('Excluir pedido?')) return; await del('pedidos',id); toast('Pedido excluído.'); };
+window.editPedido = id => {
+  const p = D.pedidos.find(x => x.id === id);
+  if (!p) return;
+  prepPedido();
+  // pre-fill
+  if (p.cliente) document.getElementById('ped-cli').value = p.cliente;
+  document.getElementById('ped-status').value = p.status || 'Aguardando';
+  document.getElementById('ped-pgto').value   = p.pgto   || 'À vista';
+  pitens = [];
+  document.getElementById('ped-itens').innerHTML = '';
+  (p.itens || []).forEach(it => {
+    const idx = pitens.length;
+    pitens.push({ ...it });
+    const row = document.createElement('div');
+    row.className = 'pi-row'; row.id = 'pi-'+idx;
+    row.innerHTML = `
+      <select class="form-input" onchange="setPI(${idx},this.value)">
+        ${D.produtos.map(pr=>`<option${pr.nome===it.produto?' selected':''}>${pr.nome}</option>`).join('')}
+      </select>
+      <input type="number" class="form-input" style="max-width:70px;" value="${it.qty}" min="1" onchange="pitens[${idx}].qty=+this.value">
+      <input type="number" class="form-input" style="max-width:90px;" id="pp-${idx}" value="${it.preco}" onchange="pitens[${idx}].preco=+this.value">
+      <button class="btn-danger" onclick="document.getElementById('pi-${idx}').remove();pitens[${idx}]=null">✕</button>`;
+    document.getElementById('ped-itens').appendChild(row);
+  });
+  // trocar salvar por atualizar
+  const footer = document.querySelector('#modal-pedido .modal-footer');
+  footer.innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-pedido')">Cancelar</button>
+    <button class="btn-primary" onclick="atualizarPedido('${id}')">Salvar alterações</button>`;
+  openModal('modal-pedido');
+};
+window.atualizarPedido = async id => {
+  const itens = pitens.filter(Boolean).filter(i => i.produto);
+  if (!itens.length) { toast('Adicione ao menos um item!'); return; }
+  await upd('pedidos', id, {
+    cliente: document.getElementById('ped-cli').value,
+    status:  document.getElementById('ped-status').value,
+    pgto:    document.getElementById('ped-pgto').value,
+    itens
+  });
+  // restaurar botão original
+  document.querySelector('#modal-pedido .modal-footer').innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-pedido')">Cancelar</button>
+    <button class="btn-primary" onclick="salvarPedido()">Salvar pedido</button>`;
+  closeModal('modal-pedido'); toast('✅ Pedido atualizado!');
+};
 
 function renderPedidos() {
   const rows = [...D.pedidos].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
@@ -541,7 +590,10 @@ function renderPedidos() {
         <td>${fmtDt(p.data)}</td><td>${p.cliente}</td>
         <td>${(p.itens||[]).length}</td><td>${R$(totPed(p))}</td>
         <td>${badge(p.status)}</td>
-        <td><button class="btn-danger" onclick="delPedido('${p.id}')">Excluir</button></td></tr>`).join('')
+        <td><div class="td-actions">
+          <button class="btn-edit" onclick="editPedido('${p.id}')">Editar</button>
+          <button class="btn-danger" onclick="delPedido('${p.id}')">Excluir</button>
+        </div></td></tr>`).join('')
     : '<tr><td colspan="7"><div class="empty-state">Nenhum pedido ainda. Crie o primeiro!</div></td></tr>';
 }
 window.exportCSV = () => {
@@ -569,6 +621,37 @@ window.salvarProduto = async () => {
   toast('✅ Produto cadastrado no Firebase!');
 };
 window.delProduto = async id => { if(!confirm('Excluir produto?')) return; await del('produtos',id); toast('Produto excluído.'); };
+window.editProduto = id => {
+  const p = D.produtos.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('pr-nome').value  = p.nome;
+  document.getElementById('pr-cod').value   = p.cod;
+  document.getElementById('pr-cat').value   = p.categoria;
+  document.getElementById('pr-est').value   = p.estoque;
+  document.getElementById('pr-min').value   = p.minimo;
+  document.getElementById('pr-preco').value = p.preco;
+  document.getElementById('pr-custo').value = p.custo;
+  const footer = document.querySelector('#modal-produto .modal-footer');
+  footer.innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-produto')">Cancelar</button>
+    <button class="btn-primary" onclick="atualizarProduto('${id}')">Salvar alterações</button>`;
+  document.getElementById('modal-produto').classList.add('open');
+};
+window.atualizarProduto = async id => {
+  await upd('produtos', id, {
+    nome:      document.getElementById('pr-nome').value,
+    cod:       document.getElementById('pr-cod').value,
+    categoria: document.getElementById('pr-cat').value,
+    estoque:   +document.getElementById('pr-est').value,
+    minimo:    +document.getElementById('pr-min').value,
+    preco:     +document.getElementById('pr-preco').value,
+    custo:     +document.getElementById('pr-custo').value,
+  });
+  document.querySelector('#modal-produto .modal-footer').innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-produto')">Cancelar</button>
+    <button class="btn-primary" onclick="salvarProduto()">Salvar</button>`;
+  closeModal('modal-produto'); toast('✅ Produto atualizado!');
+};
 
 function renderEstoque() {
   const alertas = D.produtos.filter(p => sit(p.estoque,p.minimo) !== 'OK');
@@ -588,7 +671,10 @@ function renderEstoque() {
   document.getElementById('tabela-estoque').innerHTML = D.produtos.map(p => `<tr>
     <td>${p.cod}</td><td>${p.nome}</td><td>${p.categoria}</td>
     <td>${p.estoque}</td><td>${p.minimo}</td><td>${badge(sit(p.estoque,p.minimo))}</td>
-    <td><button class="btn-danger" onclick="delProduto('${p.id}')">Excluir</button></td></tr>`).join('')
+    <td><div class="td-actions">
+      <button class="btn-edit" onclick="editProduto('${p.id}')">Editar</button>
+      <button class="btn-danger" onclick="delProduto('${p.id}')">Excluir</button>
+    </div></td></tr>`).join('')
     || '<tr><td colspan="7"><div class="empty-state">Nenhum produto cadastrado.</div></td></tr>';
 }
 
@@ -608,6 +694,35 @@ window.salvarCliente = async () => {
   toast('✅ Cliente cadastrado no Firebase!');
 };
 window.delCliente = async id => { if(!confirm('Excluir cliente?')) return; await del('clientes',id); toast('Cliente excluído.'); };
+window.editCliente = id => {
+  const c = D.clientes.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('cl-nome').value   = c.nome;
+  document.getElementById('cl-cnpj').value   = c.cnpj;
+  document.getElementById('cl-seg').value    = c.segmento;
+  document.getElementById('cl-email').value  = c.email;
+  document.getElementById('cl-tel').value    = c.tel;
+  document.getElementById('cl-status').value = c.status;
+  const footer = document.querySelector('#modal-cliente .modal-footer');
+  footer.innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
+    <button class="btn-primary" onclick="atualizarCliente('${id}')">Salvar alterações</button>`;
+  document.getElementById('modal-cliente').classList.add('open');
+};
+window.atualizarCliente = async id => {
+  await upd('clientes', id, {
+    nome:     document.getElementById('cl-nome').value,
+    cnpj:     document.getElementById('cl-cnpj').value,
+    segmento: document.getElementById('cl-seg').value,
+    email:    document.getElementById('cl-email').value,
+    tel:      document.getElementById('cl-tel').value,
+    status:   document.getElementById('cl-status').value,
+  });
+  document.querySelector('#modal-cliente .modal-footer').innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
+    <button class="btn-primary" onclick="salvarCliente()">Salvar</button>`;
+  closeModal('modal-cliente'); toast('✅ Cliente atualizado!');
+};
 
 function renderClientes() {
   document.getElementById('tabela-clientes').innerHTML = D.clientes.map(c => {
@@ -619,7 +734,10 @@ function renderClientes() {
       <td><div style="display:flex;gap:9px;align-items:center;"><div class="c-avatar">${ini}</div>${c.nome}</div></td>
       <td style="color:#999;">${c.cnpj}</td><td>${c.segmento}</td><td>${ult}</td><td>${R$(tot)}</td>
       <td>${badge(c.status)}</td>
-      <td><button class="btn-danger" onclick="delCliente('${c.id}')">Excluir</button></td></tr>`;
+      <td><div class="td-actions">
+        <button class="btn-edit" onclick="editCliente('${c.id}')">Editar</button>
+        <button class="btn-danger" onclick="delCliente('${c.id}')">Excluir</button>
+      </div></td></tr>`;
   }).join('') || '<tr><td colspan="7"><div class="empty-state">Nenhum cliente cadastrado.</div></td></tr>';
 }
 
@@ -634,17 +752,59 @@ window.salvarReceber = async () => {
   closeModal('modal-receber'); toast('✅ Título lançado!');
 };
 window.delReceber = async id => { await del('receber', id); };
-
-window.salvarPagar = async () => {
-  await add('pagar', {
-    fornecedor: document.getElementById('pag-forn').value,
-    valor:  +document.getElementById('pag-val').value,
-    vencimento: document.getElementById('pag-venc').value,
-    desc:   document.getElementById('pag-desc').value,
-  });
-  closeModal('modal-pagar'); toast('✅ Conta lançada!');
+window.editReceber = id => {
+  const r = D.receber.find(x => x.id === id);
+  if (!r) return;
+  sel('rec-cli', D.clientes.map(c=>c.nome));
+  document.getElementById('rec-cli').value  = r.cliente;
+  document.getElementById('rec-val').value  = r.valor;
+  document.getElementById('rec-venc').value = r.vencimento;
+  document.getElementById('rec-desc').value = r.desc;
+  const footer = document.querySelector('#modal-receber .modal-footer');
+  footer.innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-receber')">Cancelar</button>
+    <button class="btn-primary" onclick="atualizarReceber('${id}')">Salvar alterações</button>`;
+  document.getElementById('modal-receber').classList.add('open');
 };
+window.atualizarReceber = async id => {
+  await upd('receber', id, {
+    cliente:    document.getElementById('rec-cli').value,
+    valor:      +document.getElementById('rec-val').value,
+    vencimento: document.getElementById('rec-venc').value,
+    desc:       document.getElementById('rec-desc').value,
+  });
+  document.querySelector('#modal-receber .modal-footer').innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-receber')">Cancelar</button>
+    <button class="btn-primary" onclick="salvarReceber()">Salvar</button>`;
+  closeModal('modal-receber'); toast('✅ Título atualizado!');
+};
+
 window.delPagar = async id => { await del('pagar', id); };
+window.editPagar = id => {
+  const p = D.pagar.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('pag-forn').value = p.fornecedor;
+  document.getElementById('pag-val').value  = p.valor;
+  document.getElementById('pag-venc').value = p.vencimento;
+  document.getElementById('pag-desc').value = p.desc;
+  const footer = document.querySelector('#modal-pagar .modal-footer');
+  footer.innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-pagar')">Cancelar</button>
+    <button class="btn-primary" onclick="atualizarPagar('${id}')">Salvar alterações</button>`;
+  document.getElementById('modal-pagar').classList.add('open');
+};
+window.atualizarPagar = async id => {
+  await upd('pagar', id, {
+    fornecedor: document.getElementById('pag-forn').value,
+    valor:      +document.getElementById('pag-val').value,
+    vencimento: document.getElementById('pag-venc').value,
+    desc:       document.getElementById('pag-desc').value,
+  });
+  document.querySelector('#modal-pagar .modal-footer').innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-pagar')">Cancelar</button>
+    <button class="btn-primary" onclick="salvarPagar()">Salvar</button>`;
+  closeModal('modal-pagar'); toast('✅ Conta atualizada!');
+};
 
 function renderFinanceiro() {
   const tR = D.receber.reduce((s,r) => s+r.valor, 0);
@@ -658,13 +818,19 @@ function renderFinanceiro() {
   document.getElementById('tabela-receber').innerHTML = D.receber.map(r => `<tr>
     <td>${r.cliente}</td><td>${fmtDt(r.vencimento)}</td><td>${R$(r.valor)}</td>
     <td>${badge(stFin(r.vencimento))}</td>
-    <td><button class="btn-danger" onclick="delReceber('${r.id}')">✕</button></td></tr>`).join('')
+    <td><div class="td-actions">
+      <button class="btn-edit" onclick="editReceber('${r.id}')">Editar</button>
+      <button class="btn-danger" onclick="delReceber('${r.id}')">✕</button>
+    </div></td></tr>`).join('')
     || '<tr><td colspan="5"><div class="empty-state">Nenhum título.</div></td></tr>';
 
   document.getElementById('tabela-pagar').innerHTML = D.pagar.map(p => `<tr>
     <td>${p.fornecedor}</td><td>${fmtDt(p.vencimento)}</td><td>${R$(p.valor)}</td>
     <td>${badge(stFin(p.vencimento))}</td>
-    <td><button class="btn-danger" onclick="delPagar('${p.id}')">✕</button></td></tr>`).join('')
+    <td><div class="td-actions">
+      <button class="btn-edit" onclick="editPagar('${p.id}')">Editar</button>
+      <button class="btn-danger" onclick="delPagar('${p.id}')">✕</button>
+    </div></td></tr>`).join('')
     || '<tr><td colspan="5"><div class="empty-state">Nenhuma conta.</div></td></tr>';
 }
 
@@ -685,6 +851,34 @@ window.salvarOC = async () => {
   closeModal('modal-oc'); toast('✅ Ordem de compra criada!');
 };
 window.delOC = async id => { if(!confirm('Excluir OC?')) return; await del('ordens',id); toast('OC excluída.'); };
+window.editOC = id => {
+  const o = D.ordens.find(x => x.id === id);
+  if (!o) return;
+  sel('oc-prod', D.produtos.map(p=>p.nome));
+  document.getElementById('oc-forn').value   = o.fornecedor;
+  document.getElementById('oc-prod').value   = o.produto;
+  document.getElementById('oc-qtd').value    = o.qty;
+  document.getElementById('oc-val').value    = o.total;
+  document.getElementById('oc-status').value = o.status;
+  const footer = document.querySelector('#modal-oc .modal-footer');
+  footer.innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-oc')">Cancelar</button>
+    <button class="btn-primary" onclick="atualizarOC('${id}')">Salvar alterações</button>`;
+  document.getElementById('modal-oc').classList.add('open');
+};
+window.atualizarOC = async id => {
+  await upd('ordens', id, {
+    fornecedor: document.getElementById('oc-forn').value,
+    produto:    document.getElementById('oc-prod').value,
+    qty:        +document.getElementById('oc-qtd').value,
+    total:      +document.getElementById('oc-val').value,
+    status:     document.getElementById('oc-status').value,
+  });
+  document.querySelector('#modal-oc .modal-footer').innerHTML = `
+    <button class="btn-ghost" onclick="closeModal('modal-oc')">Cancelar</button>
+    <button class="btn-primary" onclick="salvarOC()">Salvar OC</button>`;
+  closeModal('modal-oc'); toast('✅ OC atualizada!');
+};
 window.abrirOCProd = nome => { sel('oc-prod', D.produtos.map(p=>p.nome)); document.getElementById('oc-prod').value=nome; openModal('modal-oc'); };
 
 function renderCompras() {
@@ -705,7 +899,10 @@ function renderCompras() {
     .map(o=>`<tr>
       <td>OC-${o.id.slice(-5).toUpperCase()}</td><td>${o.fornecedor}</td>
       <td>${fmtDt(o.data)}</td><td>${R$(o.total)}</td><td>${badge(o.status)}</td>
-      <td><button class="btn-danger" onclick="delOC('${o.id}')">Excluir</button></td></tr>`).join('')
+      <td><div class="td-actions">
+        <button class="btn-edit" onclick="editOC('${o.id}')">Editar</button>
+        <button class="btn-danger" onclick="delOC('${o.id}')">Excluir</button>
+      </div></td></tr>`).join('')
     || '<tr><td colspan="6"><div class="empty-state">Nenhuma OC.</div></td></tr>';
 }
 
