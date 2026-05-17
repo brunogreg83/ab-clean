@@ -991,31 +991,35 @@ function renderDashboard() {
   const porMes = {};
   D.pedidos.filter(p => p.status === 'Entregue').forEach(p => {
     if (!p.data) return;
-    const ym = p.data.slice(0,7); // "2026-05"
+    const ym = p.data.slice(0,7);
     porMes[ym] = (porMes[ym] || 0) + totPed(p);
   });
 
-  // garantir que o mês atual sempre aparece (mesmo zerado)
+  // garantir que os últimos 3 meses sempre aparecem (mesmo zerados)
   const now = new Date();
-  const ymAtual = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  if (!porMes[ymAtual]) porMes[ymAtual] = 0;
+  for (let i = 2; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const ym = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    if (!porMes[ym]) porMes[ym] = 0;
+  }
+  const ymAtual = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
 
-  // ordenar e pegar até os últimos 7 meses
-  const mesesOrdenados = Object.keys(porMes).sort().slice(-7);
+  // pegar exatamente os últimos 3 meses ordenados
+  const mesesOrdenados = Object.keys(porMes).sort().slice(-3);
 
   // nome curto do mês
   const nomeMes = ym => {
     const [y,m] = ym.split('-');
     return ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+m-1];
   };
-  const fmtK = v => v === 0 ? 'R$ 0' : v >= 1000 ? 'R$ '+(v/1000).toFixed(0)+'k' : 'R$ '+v;
+  const fmtK = v => v === 0 ? 'R$ 0' : v >= 1000 ? 'R$ '+(v/1000).toFixed(1)+'k' : 'R$ '+v;
 
   const allVals = mesesOrdenados.map(ym => porMes[ym]);
-  const mx = Math.max(...allVals, 1); // evita divisão por zero
+  const mx = Math.max(...allVals, 1);
 
   mesesOrdenados.forEach(ym => {
     const v   = porMes[ym];
-    const pct = Math.max(Math.round(v/mx*100), v===0?3:4); // barra mínima visível
+    const pct = Math.max(Math.round(v/mx*100), v===0?3:4);
     const isAtual = ym === ymAtual;
 
     const w = document.createElement('div'); w.className = 'bar-wrap';
@@ -1023,13 +1027,14 @@ function renderDashboard() {
     valLbl.className = 'bar-val';
     valLbl.textContent = fmtK(v);
     valLbl.style.color = isAtual ? '#0F6E56' : '#555';
+    valLbl.style.fontWeight = isAtual ? '700' : '600';
     const b = document.createElement('div');
     b.className = 'bar' + (isAtual ? ' hi' : '');
     b.style.height = pct + '%';
     const l = document.createElement('div');
     l.className = 'bar-lbl';
     l.textContent = nomeMes(ym);
-    if (isAtual) l.style.fontWeight = '600';
+    if (isAtual) l.style.fontWeight = '700';
     w.appendChild(valLbl); w.appendChild(b); w.appendChild(l);
     chart.appendChild(w);
   });
