@@ -49,6 +49,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .btn-ghost:hover { background: #f5f5f3; }
 .btn-danger { background: none; border: 1px solid #f5c6c6; border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #A32D2D; cursor: pointer; }
 .btn-danger:hover { background: #FCEBEB; }
+.btn-view { background: none; border: 1px solid #d5e8d4; border-radius: 8px; padding: 4px 8px; font-size: 13px; color: #1D9E75; cursor: pointer; }
+.btn-view:hover { background: #EAF3DE; }
 .btn-edit { background: none; border: 1px solid #c6d9f5; border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #185FA5; cursor: pointer; margin-right: 4px; }
 .btn-edit:hover { background: #E6F1FB; }
 .td-actions { display: flex; gap: 4px; white-space: nowrap; }
@@ -561,14 +563,27 @@ window.setPI = (idx, nome) => {
 window.salvarPedido = async () => {
   const itens = pitens.filter(Boolean).filter(i => i.produto);
   if (!itens.length) { toast('Adicione ao menos um item!'); return; }
-  await add('pedidos', {
+  const docRef = await add('pedidos', {
     data: today(),
     cliente: document.getElementById('ped-cli').value,
     status:  document.getElementById('ped-status').value,
     pgto:    document.getElementById('ped-pgto').value,
     itens
   });
-  closeModal('modal-pedido'); toast('✅ Pedido criado no Firebase!');
+  closeModal('modal-pedido');
+  toast('✅ Pedido criado no Firebase!');
+  // aguarda listener atualizar D.pedidos e abre o template
+  setTimeout(() => {
+    const p = D.pedidos.find(x => x.id === docRef?.id) || {
+      id: docRef?.id || 'novo',
+      data: today(),
+      cliente: document.getElementById('ped-cli')?.value || '',
+      status: 'Aguardando',
+      pgto: 'À vista',
+      itens
+    };
+    verPedido(p.id);
+  }, 1200);
 };
 window.delPedido = async id => { if(!confirm('Excluir pedido?')) return; await del('pedidos',id); toast('Pedido excluído.'); };
 window.editPedido = id => {
@@ -627,6 +642,7 @@ function renderPedidos() {
         <td>${(p.itens||[]).length}</td><td>${R$(totPed(p))}</td>
         <td>${badge(p.status)}</td>
         <td><div class="td-actions">
+          <button class="btn-view" onclick="verPedido('${p.id}')" title="Ver pedido"><i class="ti ti-file-text"></i></button>
           <button class="btn-edit" onclick="editPedido('${p.id}')">Editar</button>
           <button class="btn-danger" onclick="delPedido('${p.id}')">Excluir</button>
         </div></td></tr>`).join('')
@@ -1060,6 +1076,168 @@ window.relatorio = tipo => {
 };
 
 
+
+// ── Template de Pedido ────────────────────────────────────────────────────
+window.verPedido = id => {
+  const p = D.pedidos.find(x => x.id === id);
+  if (!p) { toast('Pedido não encontrado.'); return; }
+  const cli  = D.clientes.find(c => c.nome === p.cliente) || {};
+  const cod  = '#' + p.id.slice(-6).toUpperCase();
+  const tot  = totPed(p);
+  const itensRows = (p.itens||[]).map((it,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${it.produto}</td>
+      <td style="text-align:center;">${it.qty}</td>
+      <td style="text-align:right;">R$ ${Number(it.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      <td style="text-align:right;">R$ ${Number(it.qty*it.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Pedido ${cod} — AB Clean</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; color: #1a1a18; background: #fff; padding: 48px; font-size: 13px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 36px; padding-bottom: 24px; border-bottom: 2px solid #1D9E75; }
+  .logo-area .company { font-size: 22px; font-weight: 700; color: #1D9E75; }
+  .logo-area .tagline { font-size: 11px; color: #999; margin-top: 3px; }
+  .logo-area .address { font-size: 11px; color: #888; margin-top: 6px; line-height: 1.6; }
+  .pedido-info { text-align: right; }
+  .pedido-info .cod { font-size: 20px; font-weight: 700; color: #1a1a18; }
+  .pedido-info .label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .pedido-info .val { font-size: 13px; margin-top: 2px; }
+  .section { margin-bottom: 28px; }
+  .section-title { font-size: 11px; font-weight: 600; color: #1D9E75; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #e8e7e0; }
+  .client-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .field { }
+  .field .fl { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+  .field .fv { font-size: 13px; font-weight: 500; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #f5f5f3; }
+  th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 11px 12px; border-bottom: 1px solid #f0f0ec; font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  .totals { margin-top: 20px; display: flex; justify-content: flex-end; }
+  .totals-box { width: 260px; }
+  .total-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 13px; border-bottom: 1px solid #f0f0ec; }
+  .total-row:last-child { border-bottom: none; border-top: 2px solid #1D9E75; margin-top: 4px; padding-top: 10px; font-size: 15px; font-weight: 700; color: #1D9E75; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-green { background: #EAF3DE; color: #3B6D11; }
+  .badge-amber { background: #FAEEDA; color: #854F0B; }
+  .badge-blue  { background: #E6F1FB; color: #185FA5; }
+  .badge-gray  { background: #F1EFE8; color: #5F5E5A; }
+  .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e8e7e0; display: flex; justify-content: space-between; font-size: 11px; color: #bbb; }
+  .stamp { margin-top: 48px; display: flex; justify-content: flex-end; }
+  .stamp-box { width: 220px; border-top: 1px solid #aaa; text-align: center; padding-top: 6px; font-size: 11px; color: #aaa; }
+  @media print {
+    body { padding: 24px; }
+    .no-print { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="no-print" style="position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:99;">
+  <button onclick="window.print()" style="background:#1D9E75;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button>
+  <button onclick="window.close()" style="background:none;border:1px solid #ddd;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;">Fechar</button>
+</div>
+
+<!-- CABEÇALHO -->
+<div class="header">
+  <div class="logo-area">
+    <div class="company">AB Clean</div>
+    <div class="tagline">Produtos de Limpeza e Higiene</div>
+    <div class="address">
+      Londrina – PR<br>
+      contato@abclean.com.br
+    </div>
+  </div>
+  <div class="pedido-info">
+    <div class="label">Pedido de Venda</div>
+    <div class="cod">${cod}</div>
+    <div class="val" style="margin-top:8px;color:#888;">Data: ${fmtDt(p.data)}</div>
+    <div class="val" style="margin-top:4px;">
+      ${p.status === 'Entregue' ? '<span class="badge badge-green">Entregue</span>' :
+        p.status === 'Em rota'  ? '<span class="badge badge-amber">Em rota</span>'  :
+        p.status === 'Separação'? '<span class="badge badge-blue">Separação</span>' :
+        '<span class="badge badge-gray">'+p.status+'</span>'}
+    </div>
+  </div>
+</div>
+
+<!-- DADOS DO CLIENTE -->
+<div class="section">
+  <div class="section-title">Dados do Cliente</div>
+  <div class="client-grid">
+    <div class="field"><div class="fl">Razão Social</div><div class="fv">${cli.nome || p.cliente}</div></div>
+    <div class="field"><div class="fl">CNPJ</div><div class="fv">${cli.cnpj || '—'}</div></div>
+    <div class="field"><div class="fl">Segmento</div><div class="fv">${cli.segmento || '—'}</div></div>
+    <div class="field"><div class="fl">Email</div><div class="fv">${cli.email || '—'}</div></div>
+    <div class="field"><div class="fl">Telefone</div><div class="fv">${cli.tel || '—'}</div></div>
+    <div class="field"><div class="fl">Status do cliente</div><div class="fv">${cli.status || '—'}</div></div>
+  </div>
+</div>
+
+<!-- INFORMAÇÕES DO PEDIDO -->
+<div class="section">
+  <div class="section-title">Informações do Pedido</div>
+  <div class="info-grid">
+    <div class="field"><div class="fl">Condição de pagamento</div><div class="fv">${p.pgto || '—'}</div></div>
+    <div class="field"><div class="fl">Status do pedido</div><div class="fv">${p.status}</div></div>
+  </div>
+</div>
+
+<!-- ITENS -->
+<div class="section">
+  <div class="section-title">Itens do Pedido</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:36px;">#</th>
+        <th>Produto</th>
+        <th style="text-align:center;width:80px;">Qtd.</th>
+        <th style="text-align:right;width:120px;">Preço unit.</th>
+        <th style="text-align:right;width:120px;">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${itensRows}
+    </tbody>
+  </table>
+</div>
+
+<!-- TOTAIS -->
+<div class="totals">
+  <div class="totals-box">
+    <div class="total-row"><span>Subtotal</span><span>R$ ${Number(tot).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
+    <div class="total-row"><span>Descontos</span><span>R$ 0,00</span></div>
+    <div class="total-row"><span>Total do Pedido</span><span>R$ ${Number(tot).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
+  </div>
+</div>
+
+<!-- ASSINATURA -->
+<div class="stamp">
+  <div class="stamp-box">Assinatura do Cliente</div>
+</div>
+
+<!-- RODAPÉ -->
+<div class="footer">
+  <span>AB Clean – Londrina/PR · Documento gerado em ${new Date().toLocaleString('pt-BR')}</span>
+  <span>Pedido ${cod}</span>
+</div>
+
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=750,scrollbars=yes');
+  win.document.write(html);
+  win.document.close();
+};
 
 // ── Navegação ──────────────────────────────────────────────────────────────
 const titles = {dashboard:'Dashboard',vendas:'Vendas e Pedidos',estoque:'Estoque e Produtos',
