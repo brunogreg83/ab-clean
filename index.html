@@ -1144,8 +1144,50 @@ window.verPedido = id => {
 
 <div class="no-print" style="position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:99;">
   <button onclick="window.print()" style="background:#1D9E75;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button>
+  <button id="btn-email" onclick="enviarEmail()" style="background:#185FA5;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;">✉️ Enviar por Email</button>
   <button onclick="window.close()" style="background:none;border:1px solid #ddd;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;">Fechar</button>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  emailjs.init('kAwPjAH_jv7lOCqeT');
+
+  function enviarEmail() {
+    const btn = document.getElementById('btn-email');
+    btn.textContent = '⏳ Enviando...';
+    btn.disabled = true;
+
+    // captura o HTML do pedido sem a barra de botões
+    const noprint = document.querySelector('.no-print');
+    noprint.style.display = 'none';
+    const htmlPedido = document.documentElement.outerHTML;
+    noprint.style.display = 'flex';
+
+    emailjs.send('service_2efwo64', 'template_jfha3la', {
+      pedido_cod:   '${cod}',
+      cliente_nome: '${cli.nome || p.cliente}',
+      html_pedido:  htmlPedido
+    })
+    .then(() => {
+      btn.textContent = '✅ Email enviado!';
+      btn.style.background = '#1D9E75';
+      setTimeout(() => {
+        btn.textContent = '✉️ Enviar por Email';
+        btn.style.background = '#185FA5';
+        btn.disabled = false;
+      }, 3000);
+    })
+    .catch(err => {
+      btn.textContent = '❌ Erro ao enviar';
+      btn.style.background = '#D85A30';
+      btn.disabled = false;
+      console.error('EmailJS erro:', err);
+      setTimeout(() => {
+        btn.textContent = '✉️ Enviar por Email';
+        btn.style.background = '#185FA5';
+      }, 3000);
+    });
+  }
+</script>
 
 <!-- CABEÇALHO -->
 <div class="header">
