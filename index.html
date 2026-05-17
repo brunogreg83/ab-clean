@@ -8,6 +8,18 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18; min-height: 100vh; }
+
+/* LOGIN */
+#login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+.login-card { background: #fff; border: 1px solid #e8e7e0; border-radius: 16px; padding: 40px 36px; width: 360px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); }
+.login-logo .brand { font-size: 18px; font-weight: 700; color: #1a1a18; }
+.login-logo .sub { font-size: 12px; color: #aaa; margin-top: 3px; margin-bottom: 28px; }
+.login-card h2 { font-size: 15px; font-weight: 600; margin-bottom: 22px; }
+.login-error { background: #FCEBEB; color: #A32D2D; border-radius: 8px; padding: 9px 13px; font-size: 12px; margin-bottom: 14px; display: none; }
+.login-error.show { display: block; }
+.login-btn { width: 100%; background: #1D9E75; color: #fff; border: none; border-radius: 8px; padding: 10px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 6px; }
+.login-btn:hover { background: #0F6E56; }
+
 .shell { display: flex; height: 100vh; }
 .sidebar { width: 210px; min-width: 210px; background: #fff; border-right: 1px solid #e8e7e0; display: flex; flex-direction: column; }
 .sidebar-logo { padding: 20px 18px; border-bottom: 1px solid #e8e7e0; }
@@ -102,7 +114,28 @@ tr:hover td { background: #fafaf8; }
 </style>
 </head>
 <body>
-<div class="shell">
+<!-- TELA DE LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="brand">AB Chemicals</div>
+      <div class="sub">ERP · Sistema de Gestão</div>
+    </div>
+    <h2>Entrar na sua conta</h2>
+    <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
+    <div class="form-group">
+      <label class="form-label">Usuário</label>
+      <input class="form-input" type="text" id="inp-login" placeholder="Digite seu usuário" onkeydown="if(event.key==='Enter')fazerLogin()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Senha</label>
+      <input class="form-input" type="password" id="inp-senha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')fazerLogin()">
+    </div>
+    <button class="login-btn" onclick="fazerLogin()">Entrar</button>
+  </div>
+</div>
+
+<div class="shell" id="erp-shell" style="display:none;">
   <div class="sidebar">
     <div class="sidebar-logo">
       <div class="brand">AB Chemicals</div>
@@ -131,7 +164,6 @@ tr:hover td { background: #fafaf8; }
           <div class="sync-dot loading" id="sync-dot"></div>
           <span id="sync-txt">Firebase</span>
         </div>
-        <button class="btn-ghost" onclick="seedDados()" title="Carregar dados de exemplo"><i class="ti ti-database-import"></i> Dados exemplo</button>
         <button class="btn-ghost"><i class="ti ti-settings"></i></button>
       </div>
     </div>
@@ -240,6 +272,7 @@ tr:hover td { background: #fafaf8; }
     </div>
   </div>
 </div>
+<!-- fim erp-shell -->
 
 <!-- MODAIS -->
 <div class="modal-overlay" id="modal-pedido">
@@ -345,6 +378,23 @@ tr:hover td { background: #fafaf8; }
 </div>
 
 <div class="toast" id="toast"></div>
+
+<script>
+function fazerLogin() {
+  const login = document.getElementById('inp-login').value.trim();
+  const senha = document.getElementById('inp-senha').value;
+  const erro  = document.getElementById('login-error');
+  if (login === 'admin' && senha === 'anthony') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('erp-shell').style.display    = 'flex';
+    erro.classList.remove('show');
+  } else {
+    erro.classList.add('show');
+    document.getElementById('inp-senha').value = '';
+    document.getElementById('inp-senha').focus();
+  }
+}
+</script>
 
 <script type="module">
 import { initializeApp }       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -738,34 +788,7 @@ window.relatorio = tipo => {
   }
 };
 
-// ── Seed de dados de exemplo ───────────────────────────────────────────────
-window.seedDados = async () => {
-  if (!confirm('Adicionar dados de exemplo ao Firebase? (clientes, produtos, financeiro)')) return;
-  toast('Carregando dados...');
-  const prods = [
-    {cod:'COD-0001',nome:'Detergente Neutro 5L',   categoria:'Detergentes',     estoque:240,minimo:50, preco:120,custo:72},
-    {cod:'COD-0008',nome:'Desengordurante Ind. 5L',categoria:'Desengordurantes',estoque:12, minimo:30, preco:115,custo:65},
-    {cod:'COD-0021',nome:'Hipoclorito 20L',         categoria:'Sanitizantes',    estoque:3,  minimo:20, preco:67, custo:38},
-    {cod:'COD-0034',nome:'Álcool 70% 1L',           categoria:'Álcoois',         estoque:18, minimo:40, preco:240,custo:148},
-    {cod:'COD-0045',nome:'Sabão Líquido 5L',        categoria:'Sabões',          estoque:95, minimo:30, preco:98, custo:55},
-    {cod:'COD-0052',nome:'Multiuso Concentrado 1L', categoria:'Multiuso',        estoque:180,minimo:40, preco:98, custo:54},
-  ];
-  const clis = [
-    {nome:'Limpmax Ltda',  cnpj:'12.345.678/0001-99',segmento:'Facilities',   email:'contato@limpmax.com',  tel:'(43)91111-1111',status:'Ativo'},
-    {nome:'Clean Service', cnpj:'98.765.432/0001-11',segmento:'Hospitalar',   email:'contato@cleanservice.com',tel:'(43)92222-2222',status:'Ativo'},
-    {nome:'Higa Serviços', cnpj:'45.678.901/0001-55',segmento:'Limpeza Urb.',email:'contato@higa.com',      tel:'(43)93333-3333',status:'Ativo'},
-    {nome:'Grupo JL',      cnpj:'33.211.456/0001-88',segmento:'Alimentício',  email:'contato@grupojl.com',  tel:'(43)94444-4444',status:'Inativo'},
-    {nome:'HospClean',     cnpj:'77.654.321/0001-44',segmento:'Hospitalar',   email:'contato@hospclean.com',tel:'(43)95555-5555',status:'Ativo'},
-  ];
-  for (const p of prods) await add('produtos', p);
-  for (const c of clis)  await add('clientes', c);
-  await add('receber',{cliente:'Limpmax Ltda', valor:6100,vencimento:'2026-05-15',desc:'Pedido inicial'});
-  await add('receber',{cliente:'Clean Service',valor:3290,vencimento:'2026-05-20',desc:'Pedido inicial'});
-  await add('receber',{cliente:'HospClean',    valor:2450,vencimento:'2026-06-02',desc:'Pedido inicial'});
-  await add('pagar',{fornecedor:'Química SP',    valor:8400,vencimento:'2026-05-18',desc:'Compra inicial'});
-  await add('pagar',{fornecedor:'Fornece Brasil',valor:5900,vencimento:'2026-05-30',desc:'Compra inicial'});
-  toast('✅ Dados de exemplo carregados no Firebase!');
-};
+
 
 // ── Navegação ──────────────────────────────────────────────────────────────
 const titles = {dashboard:'Dashboard',vendas:'Vendas e Pedidos',estoque:'Estoque e Produtos',
