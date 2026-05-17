@@ -77,8 +77,9 @@ tr:hover td { background: #fafaf8; }
 .form-label { font-size: 12px; color: #666; margin-bottom: 5px; display: block; }
 .form-input { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 8px 11px; font-size: 13px; background: #fff; }
 .form-input:focus { outline: none; border-color: #1D9E75; }
-.mini-chart { height: 90px; display: flex; align-items: flex-end; gap: 5px; }
-.bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.mini-chart { height: 110px; display: flex; align-items: flex-end; gap: 5px; }
+.bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.bar-val { font-size: 8px; color: #555; font-weight: 600; white-space: nowrap; }
 .bar { width: 100%; background: #9FE1CB; border-radius: 3px 3px 0 0; min-height: 4px; }
 .bar.hi { background: #1D9E75; }
 .bar-lbl { font-size: 9px; color: #aaa; }
@@ -743,12 +744,14 @@ function renderDashboard() {
   const meses = ['Nov','Dez','Jan','Fev','Mar','Abr','Mai'];
   const vals  = [52000,61000,48000,74000,69000,76000,Math.max(fat,500)];
   const mx    = Math.max(...vals);
+  const fmtK  = v => v >= 1000 ? 'R$ ' + (v/1000).toFixed(0) + 'k' : 'R$ ' + v;
   meses.forEach((m,i) => {
     const pct = Math.round(vals[i]/mx*100);
     const w=document.createElement('div'); w.className='bar-wrap';
+    const valLbl=document.createElement('div'); valLbl.className='bar-val'; valLbl.textContent=fmtK(vals[i]);
     const b=document.createElement('div'); b.className='bar'+(i===6?' hi':''); b.style.height=pct+'%';
     const l=document.createElement('div'); l.className='bar-lbl'; l.textContent=m;
-    w.appendChild(b); w.appendChild(l); chart.appendChild(w);
+    w.appendChild(valLbl); w.appendChild(b); w.appendChild(l); chart.appendChild(w);
   });
 }
 
