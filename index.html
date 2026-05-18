@@ -1052,6 +1052,7 @@ function renderDashboard() {
     const container = document.getElementById('bar-chart');
     if (!container) return;
 
+    const n      = meses.length;
     const W      = Math.max(460, n * 70);
     const H      = 200;
     const padTop = 40;
@@ -1061,12 +1062,11 @@ function renderDashboard() {
     const chartW = W - padL - padR;
     const chartH = H - padTop - padBot;
     const mx     = Math.max(...vals, 1);
-    const n      = meses.length;
     const barW   = Math.min(70, chartW / n * 0.45);
     const slot   = chartW / n;
 
     const COLORS = {
-      bar: ['#C8EDE4','#6DCBB5','#1D9E75'],
+      bar: ['#C0E8FF','#93C5E8','#6DCBB5','#3BAED4','#2E8FBF','#1D9E75','#166F52','#0F6E56','#1D9E75','#6DCBB5','#93C5E8','#C0E8FF'],
       line:'#0F6E56', grid:'#f0f0ec',
       up:'#1D9E75', dn:'#D85A30', txt:'#888'
     };
@@ -1092,7 +1092,7 @@ function renderDashboard() {
       const x    = cx[i] - barW/2;
       const y    = padTop + chartH - bH;
       const isAt = ym === ymAtual;
-      const col  = COLORS.bar[i];
+      const col  = isAt ? '#1D9E75' : COLORS.bar[Math.floor(i * 11 / Math.max(n-1,1))];
       const gid  = 'bg'+i;
       return `
         <defs>
