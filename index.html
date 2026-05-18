@@ -180,7 +180,7 @@ tr:hover td { background: #fafaf8; }
         <div class="two-col">
           <div class="card" style="padding-bottom:12px;">
             <div class="section-title">Faturamento mensal (R$)</div>
-            <canvas id="bar-chart" style="width:100%;height:180px;display:block;"></canvas>
+            <div id="bar-chart" style="width:100%;"></div>
             <div id="chart-legenda" style="display:flex;gap:16px;margin-top:10px;justify-content:center;font-size:11px;color:#888;"></div>
           </div>
           <div class="card"><div class="section-title">Últimos pedidos</div>
@@ -1006,172 +1006,114 @@ function renderDashboard() {
   // Comparativo: variação vs mês anterior
   const variacoes = vals.map((v,i) => i === 0 ? null : vals[i-1] === 0 ? null : ((v - vals[i-1]) / vals[i-1] * 100));
 
-  // Canvas — aguarda render do DOM para pegar largura real
+  // ── Gráfico SVG ───────────────────────────────────────────────────────────
   function desenharGrafico() {
-  const canvas = document.getElementById('bar-chart');
-  if (!canvas) return;
+    const container = document.getElementById('bar-chart');
+    if (!container) return;
 
-  // mede largura real pelo parent
-  const W = canvas.parentElement ? canvas.parentElement.clientWidth - 36 : 340;
-  const H = 180;
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width  = W * dpr;
-  canvas.height = H * dpr;
-  canvas.style.width  = W + 'px';
-  canvas.style.height = H + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
+    const W      = 460;
+    const H      = 200;
+    const padTop = 40;
+    const padBot = 30;
+    const padL   = 48;
+    const padR   = 16;
+    const chartW = W - padL - padR;
+    const chartH = H - padTop - padBot;
+    const mx     = Math.max(...vals, 1);
+    const n      = meses.length;
+    const barW   = Math.min(70, chartW / n * 0.45);
+    const slot   = chartW / n;
 
-  const PAD_TOP    = 36;
-  const PAD_BOTTOM = 36;
-  const PAD_SIDE   = 20;
-  const chartH     = H - PAD_TOP - PAD_BOTTOM;
-  const mx         = Math.max(...vals, 1);
-  const n          = meses.length;
-  const barW       = Math.min(60, (W - PAD_SIDE*2) / n * 0.5);
-  const step       = (W - PAD_SIDE*2) / n;
+    const COLORS = {
+      bar: ['#C8EDE4','#6DCBB5','#1D9E75'],
+      line:'#0F6E56', grid:'#f0f0ec',
+      up:'#1D9E75', dn:'#D85A30', txt:'#888'
+    };
 
-  const COLORS = {
-    bar0: '#C8EDE4',  // 2 meses atrás — mais claro
-    bar1: '#6DCBB5',  // mês anterior — médio
-    bar2: '#1D9E75',  // mês atual — forte
-    line: '#0F6E56',
-    dot:  '#0F6E56',
-    text: '#555',
-    grid: '#f0f0ec',
-    label:'#999'
-  };
+    const fmtK = v => v === 0 ? 'R$0' : v >= 1000 ? 'R$'+(v/1000).toFixed(1)+'k' : 'R$'+v;
 
-  // animação
-  let progress = 0;
-  let animFrame;
-
-  function draw(prog) {
-    ctx.clearRect(0, 0, W, H);
+    // centros X de cada barra
+    const cx = meses.map((_,i) => padL + slot * i + slot / 2);
+    // topo Y de cada barra
+    const topY = vals.map(v => padTop + chartH - Math.max(chartH * (v/mx), v===0?2:4));
 
     // linhas de grade
-    const gridLevels = [0, 0.25, 0.5, 0.75, 1];
-    ctx.strokeStyle = COLORS.grid;
-    ctx.lineWidth = 1;
-    gridLevels.forEach(lv => {
-      const y = PAD_TOP + chartH * (1 - lv);
-      ctx.beginPath(); ctx.moveTo(PAD_SIDE, y); ctx.lineTo(W - PAD_SIDE, y); ctx.stroke();
-      if (lv > 0) {
-        ctx.fillStyle = '#ccc';
-        ctx.font = '9px sans-serif';
-        ctx.textAlign = 'right';
-        ctx.fillText(fmtK(mx * lv), PAD_SIDE - 2, y + 3);
-      }
-    });
+    const grids = [0, 0.25, 0.5, 0.75, 1].map(lv => {
+      const y = padTop + chartH * (1 - lv);
+      return `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="${COLORS.grid}" stroke-width="1"/>` +
+        (lv > 0 ? `<text x="${padL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="#bbb">${fmtK(mx*lv)}</text>` : '');
+    }).join('');
 
-    // barras e valores
-    const centerXs = [];
-    meses.forEach((ym, i) => {
+    // barras
+    const bars = meses.map((ym, i) => {
       const v    = vals[i];
-      const pct  = v / mx;
-      const barH = Math.max(chartH * pct * prog, v === 0 ? 2 : 3);
-      const cx   = PAD_SIDE + step * i + step / 2;
-      const x    = cx - barW / 2;
-      const y    = PAD_TOP + chartH - barH;
-      centerXs.push(cx);
-
-      // barra com gradiente
-      const grad = ctx.createLinearGradient(x, y, x, PAD_TOP + chartH);
+      const bH   = Math.max(chartH * (v/mx), v===0?2:4);
+      const x    = cx[i] - barW/2;
+      const y    = padTop + chartH - bH;
       const isAt = ym === ymAtual;
-      const col  = i === 2 ? COLORS.bar2 : i === 1 ? COLORS.bar1 : COLORS.bar0;
-      grad.addColorStop(0, col);
-      grad.addColorStop(1, col + '99');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.roundRect(x, y, barW, barH, [4, 4, 0, 0]);
-      ctx.fill();
+      const col  = COLORS.bar[i];
+      const gid  = 'bg'+i;
+      return `
+        <defs>
+          <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${col}"/>
+            <stop offset="100%" stop-color="${col}" stop-opacity="0.5"/>
+          </linearGradient>
+        </defs>
+        <rect x="${x}" y="${y}" width="${barW}" height="${bH}" rx="4" ry="4" fill="url(#${gid})">
+          <animate attributeName="height" from="0" to="${bH}" dur="0.6s" fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1" keyTimes="0;1"/>
+          <animate attributeName="y" from="${padTop+chartH}" to="${y}" dur="0.6s" fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1" keyTimes="0;1"/>
+        </rect>
+        <text x="${cx[i]}" y="${y-5}" text-anchor="middle" font-size="10" font-weight="${isAt?'bold':'600'}" fill="${isAt?COLORS.line:'#555'}">${fmtK(v)}</text>
+        <text x="${cx[i]}" y="${H-8}" text-anchor="middle" font-size="10" font-weight="${isAt?'bold':'normal'}" fill="${isAt?COLORS.line:COLORS.txt}">${nomeMes(ym)}</text>`;
+    }).join('');
 
-      // valor em cima da barra
-      if (prog === 1) {
-        ctx.fillStyle = isAt ? COLORS.line : COLORS.text;
-        ctx.font = (isAt ? 'bold ' : '') + '10px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(fmtK(v), cx, y - 5);
+    // linha de tendência entre topos
+    let linePath = '';
+    let dots = '';
+    if (n > 1) {
+      // curva bezier
+      let d = 'M ' + cx[0] + ' ' + topY[0];
+      for (let i = 1; i < n; i++) {
+        const cpx = (cx[i-1] + cx[i]) / 2;
+        d += ' C ' + cpx + ' ' + topY[i-1] + ' ' + cpx + ' ' + topY[i] + ' ' + cx[i] + ' ' + topY[i];
       }
+      linePath = `<path d="${d}" fill="none" stroke="${COLORS.line}" stroke-width="2" stroke-dasharray="5,3" opacity="0.7"/>`;
+      dots = cx.map((x,i) =>
+        `<circle cx="${x}" cy="${topY[i]}" r="4" fill="white" stroke="${COLORS.line}" stroke-width="2"/>`
+      ).join('');
+    }
 
-      // label do mês
-      ctx.fillStyle = isAt ? COLORS.line : COLORS.label;
-      ctx.font = (isAt ? 'bold ' : '') + '10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(nomeMes(ym), cx, H - 6);
-    });
+    // setas de variação
+    const arrows = variacoes.map((v, i) => {
+      if (v === null || i === 0) return '';
+      const px  = (cx[i-1] + cx[i]) / 2;
+      const py  = Math.min(topY[i-1], topY[i]) - 14;
+      const up  = v >= 0;
+      const lbl = (up ? '▲ +' : '▼ ') + Math.abs(v).toFixed(0) + '%';
+      return `<text x="${px}" y="${py}" text-anchor="middle" font-size="9" font-weight="bold" fill="${up ? COLORS.up : COLORS.dn}">${lbl}</text>`;
+    }).join('');
 
-    // linha de tendência conectando os topos das barras
-    if (prog === 1 && n > 1) {
-      const points = meses.map((ym, i) => {
-        const v    = vals[i];
-        const pct  = v / mx;
-        const barH = Math.max(chartH * pct, v === 0 ? 2 : 3);
-        return { x: centerXs[i], y: PAD_TOP + chartH - barH };
-      });
+    container.innerHTML = `
+      <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+        ${grids}
+        ${bars}
+        ${linePath}
+        ${dots}
+        ${arrows}
+      </svg>`;
 
-      // linha suave (curva)
-      ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        const cpx = (points[i-1].x + points[i].x) / 2;
-        ctx.bezierCurveTo(cpx, points[i-1].y, cpx, points[i].y, points[i].x, points[i].y);
-      }
-      ctx.strokeStyle = COLORS.line;
-      ctx.lineWidth   = 2;
-      ctx.setLineDash([4, 3]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // pontos na linha
-      points.forEach((pt, i) => {
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#fff';
-        ctx.fill();
-        ctx.strokeStyle = COLORS.dot;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      });
-
-      // setas de variação entre meses
-      for (let i = 1; i < meses.length; i++) {
-        const vari = variacoes[i];
-        if (vari === null) continue;
-        const px = (centerXs[i-1] + centerXs[i]) / 2;
-        const py = Math.min(points[i-1].y, points[i].y) - 14;
-        const up = vari >= 0;
-        ctx.fillStyle = up ? '#1D9E75' : '#D85A30';
-        ctx.font = 'bold 9px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText((up ? '▲ +' : '▼ ') + Math.abs(vari).toFixed(0) + '%', px, py);
-      }
+    // legenda
+    const legenda = document.getElementById('chart-legenda');
+    if (legenda) {
+      legenda.innerHTML = meses.map((ym, i) =>
+        '<span style="display:flex;align-items:center;gap:4px;">' +
+        '<span style="width:10px;height:10px;border-radius:2px;background:' + COLORS.bar[i] + ';display:inline-block;"></span>' +
+        '<span>' + nomeMes(ym) + ' · ' + fmtK(vals[i]) + '</span></span>'
+      ).join('');
     }
   }
-
-  function animate() {
-    progress += 0.04;
-    if (progress >= 1) { progress = 1; draw(1); return; }
-    draw(progress);
-    animFrame = requestAnimationFrame(animate);
-  }
-  if (animFrame) cancelAnimationFrame(animFrame);
-  animate();
-
-  // legenda
-  const legenda = document.getElementById('chart-legenda');
-  if (legenda) {
-    legenda.innerHTML = meses.map((ym, i) => {
-      const col = i === 2 ? COLORS.bar2 : i === 1 ? COLORS.bar1 : COLORS.bar0;
-      return '<span style="display:flex;align-items:center;gap:4px;">' +
-        '<span style="width:10px;height:10px;border-radius:2px;background:' + col + ';display:inline-block;"></span>' +
-        '<span>' + nomeMes(ym) + ' · ' + fmtK(vals[i]) + '</span></span>';
-    }).join('');
-  }
-  } // fim desenharGrafico
-
-  // aguarda o DOM pintar o card para pegar a largura correta
-  setTimeout(desenharGrafico, 60);
+  setTimeout(desenharGrafico, 0);
 }
 
 // ── Relatórios ─────────────────────────────────────────────────────────────
