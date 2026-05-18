@@ -428,11 +428,30 @@ tr:hover td { background: #fafaf8; }
 <div class="toast" id="toast"></div>
 
 <script>
+const SESSION_KEY = 'abc_auth';
+const SESSION_TTL = 10 * 60 * 1000; // 10 minutos em ms
+
+function verificarSessao() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return false;
+    const { ts } = JSON.parse(raw);
+    if (Date.now() - ts < SESSION_TTL) return true;
+    sessionStorage.removeItem(SESSION_KEY);
+    return false;
+  } catch(e) { return false; }
+}
+
+function salvarSessao() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ts: Date.now() }));
+}
+
 function fazerLogin() {
   const login = document.getElementById('inp-login').value.trim();
   const senha = document.getElementById('inp-senha').value;
   const erro  = document.getElementById('login-error');
   if (login === 'admin' && senha === 'anthony') {
+    salvarSessao();
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('erp-shell').style.display    = 'flex';
     erro.classList.remove('show');
@@ -442,6 +461,17 @@ function fazerLogin() {
     document.getElementById('inp-senha').focus();
   }
 }
+
+// ao carregar a página, checar se a sessão ainda é válida
+if (verificarSessao()) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('erp-shell').style.display    = 'flex';
+}
+
+// renovar o timestamp a cada interação do usuário
+document.addEventListener('click', () => {
+  if (sessionStorage.getItem(SESSION_KEY)) salvarSessao();
+});
 </script>
 
 <script type="module">
