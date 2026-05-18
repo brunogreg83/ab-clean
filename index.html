@@ -1383,6 +1383,9 @@ window.goTo = (id, btn) => {
 function renderAll() {
   renderDashboard(); renderPedidos(); renderEstoque(); renderClientes(); renderFinanceiro(); renderCompras();
 }
+
+// expor globalmente para o onchange do select funcionar
+window.renderDashboard = renderDashboard;
 </script>
 </body>
 </html>
