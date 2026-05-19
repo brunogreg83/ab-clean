@@ -98,6 +98,102 @@ tr:hover td { background: #fafaf8; }
 .report-card { background: #fff; border: 1px solid #e8e7e0; border-radius: 12px; padding: 18px; cursor: pointer; transition: border-color 0.15s; }
 .report-card:hover { border-color: #1D9E75; }
 .report-card .rc-icon { font-size: 26px; color: #1D9E75; margin-bottom: 10px; }
+
+/* ── MOBILE NAV BAR ─────────────────────────────────────────────────────── */
+.mobile-topbar { display: none; }
+.mobile-nav    { display: none; }
+.mobile-fab    { display: none; }
+.mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 199; }
+.mobile-drawer { display: none; position: fixed; top: 0; left: 0; bottom: 0; width: 260px; background: #0a1628; z-index: 200; transform: translateX(-100%); transition: transform 0.25s ease; flex-direction: column; overflow-y: auto; }
+.mobile-drawer.open { transform: translateX(0); }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Esconder sidebar desktop */
+  .sidebar { display: none; }
+  .topbar  { display: none; }
+
+  /* Shell vira coluna */
+  .shell { flex-direction: column; height: 100vh; overflow: hidden; }
+  .main  { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* Topbar mobile */
+  .mobile-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 54px; background: #0a1628; padding: 0 16px; flex-shrink: 0;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .mobile-topbar .m-logo { font-size: 15px; font-weight: 700; color: #fff; }
+  .mobile-topbar .m-right { display: flex; align-items: center; gap: 10px; }
+  .mobile-topbar .m-sync { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
+  .mobile-topbar .m-sync.ok { background: #1D9E75; }
+  .mobile-topbar .m-sync.loading { background: #F0A500; animation: pulse 1s infinite; }
+  .mobile-topbar .m-menu-btn { background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; padding: 4px; }
+  .mobile-topbar .m-title { font-size: 14px; font-weight: 600; color: #fff; }
+
+  /* Drawer */
+  .mobile-drawer { display: flex; }
+  .mobile-overlay { display: block; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .mobile-overlay.open { opacity: 1; pointer-events: all; }
+
+  /* Conteúdo scrollável */
+  .content { padding: 16px; padding-bottom: 80px; overflow-y: auto; flex: 1; }
+
+  /* Grids viram 1 coluna */
+  .kpi-grid   { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .two-col    { grid-template-columns: 1fr; gap: 12px; }
+  .three-col  { grid-template-columns: 1fr; gap: 10px; }
+
+  /* KPI menor */
+  .kpi-value  { font-size: 18px; }
+  .kpi-card   { padding: 12px 14px; }
+
+  /* Tabelas scroll horizontal */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table       { min-width: 480px; }
+
+  /* Modais full screen no mobile */
+  .modal-overlay { align-items: flex-end; }
+  .modal {
+    width: 100% !important; max-width: 100% !important; border-radius: 20px 20px 0 0;
+    max-height: 90vh; overflow-y: auto; padding: 24px 20px 32px;
+  }
+
+  /* Botão flutuante novo pedido */
+  .mobile-fab {
+    display: flex; align-items: center; justify-content: center;
+    position: fixed; bottom: 76px; right: 20px; z-index: 98;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #1D9E75; color: #fff; font-size: 26px;
+    border: none; cursor: pointer; box-shadow: 0 4px 16px rgba(29,158,117,0.45);
+  }
+
+  /* Nav bar inferior */
+  .mobile-nav {
+    display: flex; background: #fff; border-top: 1px solid #e8e7e0;
+    height: 64px; flex-shrink: 0; z-index: 100;
+  }
+  .mobile-nav .mn-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 3px; font-size: 10px; color: #999;
+    border: none; background: none; cursor: pointer; padding: 8px 4px;
+    transition: color 0.15s;
+  }
+  .mobile-nav .mn-item i { font-size: 20px; }
+  .mobile-nav .mn-item.active { color: #1D9E75; }
+  .mobile-nav .mn-item.active i { color: #1D9E75; }
+
+  /* Form inputs maiores no touch */
+  .form-input { padding: 12px 14px; font-size: 16px; }
+  .btn-primary, .btn-ghost { padding: 12px 18px; font-size: 14px; }
+  .pi-row { flex-wrap: wrap; gap: 6px; }
+  .pi-row select { min-width: 100%; }
+  .pi-row input  { flex: 1; min-width: 80px; }
+
+  /* Login mobile */
+  .login-card { width: 92vw; padding: 32px 24px; border-radius: 16px; }
+}
+
 .report-card .rc-title { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
 .report-card .rc-desc { font-size: 12px; color: #888; }
 .report-card .rc-cta { font-size: 11px; color: #1D9E75; margin-top: 12px; }
@@ -158,6 +254,45 @@ tr:hover td { background: #fafaf8; }
   </div>
 
   <div class="main">
+    <!-- TOPBAR MOBILE -->
+    <div class="mobile-topbar">
+      <button class="m-menu-btn" onclick="toggleDrawer()"><i class="ti ti-menu-2"></i></button>
+      <div class="m-title" id="mob-title">Dashboard</div>
+      <div class="m-right">
+        <div class="m-sync loading" id="mob-sync"></div>
+      </div>
+    </div>
+
+    <!-- DRAWER MOBILE (menu lateral) -->
+    <div class="mobile-overlay" id="mob-overlay" onclick="toggleDrawer()"></div>
+    <div class="mobile-drawer" id="mob-drawer">
+      <div style="padding:20px 18px 12px;border-bottom:1px solid #1a3a6b;">
+        <div style="font-size:15px;font-weight:700;color:#fff;">AB Chemicals</div>
+        <div style="font-size:11px;color:#6b8cba;margin-top:2px;">ERP v3.0 · Firebase</div>
+      </div>
+      <nav style="padding:10px 0;flex:1;" id="mob-nav-menu">
+        <button class="nav-item active" onclick="mobGoTo('dashboard')" id="mob-nav-dashboard"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
+        <button class="nav-item" onclick="mobGoTo('vendas')" id="mob-nav-vendas"><i class="ti ti-shopping-cart"></i>Vendas e Pedidos</button>
+        <button class="nav-item" onclick="mobGoTo('estoque')" id="mob-nav-estoque"><i class="ti ti-box"></i>Estoque e Produtos</button>
+        <button class="nav-item" onclick="mobGoTo('clientes')" id="mob-nav-clientes"><i class="ti ti-users"></i>Clientes e CRM</button>
+        <button class="nav-item" onclick="mobGoTo('financeiro')" id="mob-nav-financeiro"><i class="ti ti-receipt"></i>Financeiro</button>
+        <button class="nav-item" onclick="mobGoTo('compras')" id="mob-nav-compras"><i class="ti ti-truck"></i>Compras</button>
+        <button class="nav-item" onclick="mobGoTo('relatorios')" id="mob-nav-relatorios"><i class="ti ti-chart-bar"></i>Relatórios</button>
+        <button class="nav-item" onclick="mobGoTo('ajustes')" id="mob-nav-ajustes"><i class="ti ti-settings"></i>Ajustes</button>
+      </nav>
+      <div style="padding:14px 18px;border-top:1px solid #1a3a6b;">
+        <div style="font-size:11px;color:#6b8cba;">Usuário</div>
+        <div style="font-size:13px;font-weight:500;color:#fff;margin-top:2px;" id="mob-username">—</div>
+        <button onclick="fazerLogout()" style="margin-top:10px;width:100%;background:#1a3a6b;color:#8aafd4;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;text-align:left;">
+          <i class="ti ti-logout"></i> Sair
+        </button>
+      </div>
+    </div>
+
+    <!-- FAB: botão flutuante novo pedido (só aparece em Vendas) -->
+    <button class="mobile-fab" id="mob-fab" onclick="openModal('modal-pedido')" style="display:none;">
+      <i class="ti ti-plus"></i>
+    </button>
     <div class="topbar">
       <div class="topbar-title" id="page-title">Dashboard</div>
       <div class="topbar-actions">
@@ -306,6 +441,16 @@ tr:hover td { background: #fafaf8; }
       </div>
 
     </div>
+
+    <!-- NAV BAR INFERIOR MOBILE -->
+    <nav class="mobile-nav" id="mob-bottom-nav">
+      <button class="mn-item active" onclick="mobGoTo('dashboard')" id="mbn-dashboard"><i class="ti ti-layout-dashboard"></i>Início</button>
+      <button class="mn-item" onclick="mobGoTo('vendas')" id="mbn-vendas"><i class="ti ti-shopping-cart"></i>Pedidos</button>
+      <button class="mn-item" onclick="mobGoTo('clientes')" id="mbn-clientes"><i class="ti ti-users"></i>Clientes</button>
+      <button class="mn-item" onclick="mobGoTo('estoque')" id="mbn-estoque"><i class="ti ti-box"></i>Estoque</button>
+      <button class="mn-item" onclick="toggleDrawer()"><i class="ti ti-dots"></i>Mais</button>
+    </nav>
+
   </div>
 </div>
 <!-- fim erp-shell -->
@@ -508,6 +653,58 @@ window.fazerLogout = function() {
   location.reload();
 };
 
+// ── Mobile nav ─────────────────────────────────────────────────────────────
+window.toggleDrawer = function() {
+  const drawer  = document.getElementById('mob-drawer');
+  const overlay = document.getElementById('mob-overlay');
+  const isOpen  = drawer.classList.contains('open');
+  drawer.classList.toggle('open', !isOpen);
+  overlay.classList.toggle('open', !isOpen);
+};
+
+const MOB_TITLES = {dashboard:'Dashboard',vendas:'Vendas e Pedidos',estoque:'Estoque e Produtos',
+  clientes:'Clientes e CRM',financeiro:'Financeiro',compras:'Compras',relatorios:'Relatórios',ajustes:'Ajustes'};
+
+window.mobGoTo = function(id) {
+  // fechar drawer se aberto
+  document.getElementById('mob-drawer').classList.remove('open');
+  document.getElementById('mob-overlay').classList.remove('open');
+
+  const sessao  = verificarSessao();
+  const perfil  = sessao?.perfil || 'admin';
+  const perms   = perfil === 'admin'
+    ? ['dashboard','vendas','estoque','clientes','financeiro','compras','relatorios','ajustes']
+    : ['vendas'];
+  if (!perms.includes(id)) { alert('Acesso não autorizado.'); return; }
+
+  // telas
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const sc = document.getElementById('screen-' + id);
+  if (sc) sc.classList.add('active');
+
+  // título mobile
+  const mt = document.getElementById('mob-title');
+  if (mt) mt.textContent = MOB_TITLES[id] || id;
+
+  // desktop page title
+  const pt = document.getElementById('page-title');
+  if (pt) pt.textContent = MOB_TITLES[id] || id;
+
+  // nav bar inferior — highlight
+  document.querySelectorAll('.mn-item').forEach(b => b.classList.remove('active'));
+  const mbn = document.getElementById('mbn-' + id);
+  if (mbn) mbn.classList.add('active');
+
+  // drawer — highlight
+  document.querySelectorAll('#mob-nav-menu .nav-item').forEach(b => b.classList.remove('active'));
+  const mdr = document.getElementById('mob-nav-' + id);
+  if (mdr) mdr.classList.add('active');
+
+  // FAB: mostrar só em Vendas
+  const fab = document.getElementById('mob-fab');
+  if (fab) fab.style.display = id === 'vendas' ? 'flex' : 'none';
+};
+
 // usuários carregados do Firebase (preenchido pelo listener)
 window._usuariosDB = [];
 
@@ -538,21 +735,38 @@ function fazerLogin() {
 }
 
 function aplicarPerfil(perfil, nome) {
-  // atualiza nome na sidebar
+  // desktop sidebar
   const el = document.getElementById('sidebar-username');
   if (el) el.textContent = nome || 'Usuário';
+  // mobile drawer
+  const mob = document.getElementById('mob-username');
+  if (mob) mob.textContent = nome || 'Usuário';
 
-  // vendedor: esconde tudo exceto Vendas
   if (perfil === 'vendedor') {
+    // desktop: esconder itens
     ['nav-dashboard','nav-estoque','nav-clientes','nav-financeiro','nav-compras','nav-relatorios','nav-ajustes']
       .forEach(id => { const b = document.getElementById(id); if(b) b.style.display='none'; });
-    // redireciona para vendas
-    const btnVendas = document.getElementById('nav-vendas');
-    if (btnVendas) { btnVendas.classList.add('active'); }
+    // mobile drawer: esconder itens
+    ['mob-nav-dashboard','mob-nav-estoque','mob-nav-clientes','mob-nav-financeiro','mob-nav-compras','mob-nav-relatorios','mob-nav-ajustes']
+      .forEach(id => { const b = document.getElementById(id); if(b) b.style.display='none'; });
+    // mobile bottom nav: esconder botões não permitidos
+    ['mbn-dashboard','mbn-clientes','mbn-estoque']
+      .forEach(id => { const b = document.getElementById(id); if(b) b.style.display='none'; });
+
+    // redirecionar para vendas
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const sv = document.getElementById('screen-vendas');
     if (sv) sv.classList.add('active');
-    document.getElementById('page-title').textContent = 'Vendas e Pedidos';
+    const nvv = document.getElementById('nav-vendas');
+    if (nvv) nvv.classList.add('active');
+    const pt = document.getElementById('page-title');
+    if (pt) pt.textContent = 'Vendas e Pedidos';
+    const mt = document.getElementById('mob-title');
+    if (mt) mt.textContent = 'Vendas e Pedidos';
+    // FAB visível
+    const fab = document.getElementById('mob-fab');
+    if (fab) fab.style.display = 'flex';
   }
 }
 
@@ -593,8 +807,14 @@ const D = { pedidos:[], produtos:[], clientes:[], receber:[], pagar:[], ordens:[
 // ── Sync indicator ─────────────────────────────────────────────────────────
 const dot  = document.getElementById('sync-dot');
 const lbl  = document.getElementById('fb-label');
-function syncOk()  { dot.className='sync-dot ok';  lbl.textContent='conectado'; }
-function syncErr() { dot.className='sync-dot err'; lbl.textContent='erro de conexão'; }
+function syncOk()  {
+  dot.className='sync-dot ok';  lbl.textContent='conectado';
+  const ms=document.getElementById('mob-sync'); if(ms) ms.className='m-sync ok';
+}
+function syncErr() {
+  dot.className='sync-dot err'; lbl.textContent='erro de conexão';
+  const ms=document.getElementById('mob-sync'); if(ms) ms.className='m-sync err';
+}
 
 // ── Real-time listeners ────────────────────────────────────────────────────
 let loaded = {};
