@@ -529,6 +529,7 @@ tr:hover td { background: #fafaf8; }
     <div class="form-group"><label class="form-label">Estoque mínimo</label><input class="form-input" type="number" id="pr-min" value="10" min="0"></div>
     <div class="form-group"><label class="form-label">Preço de venda (R$)</label><input class="form-input" type="number" id="pr-preco" value="0" step="0.01"></div>
     <div class="form-group"><label class="form-label">Custo (R$)</label><input class="form-input" type="number" id="pr-custo" value="0" step="0.01"></div>
+    <div class="form-group"><label class="form-label">Observações</label><textarea class="form-input" id="pr-obs" rows="3" placeholder="Informações adicionais sobre o produto..." style="resize:vertical;"></textarea></div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-produto')">Cancelar</button>
       <button class="btn-primary" onclick="salvarProduto()">Salvar</button>
@@ -1021,6 +1022,7 @@ window.salvarProduto = async () => {
     minimo:   +document.getElementById('pr-min').value,
     preco:    +document.getElementById('pr-preco').value,
     custo:    +document.getElementById('pr-custo').value,
+    obs:      document.getElementById('pr-obs').value,
   });
   closeModal('modal-produto');
   ['pr-nome','pr-cod'].forEach(id => document.getElementById(id).value = '');
@@ -1037,6 +1039,7 @@ window.editProduto = id => {
   document.getElementById('pr-min').value   = p.minimo;
   document.getElementById('pr-preco').value = p.preco;
   document.getElementById('pr-custo').value = p.custo;
+  document.getElementById('pr-obs').value   = p.obs || '';
   const footer = document.querySelector('#modal-produto .modal-footer');
   footer.innerHTML = `
     <button class="btn-ghost" onclick="closeModal('modal-produto')">Cancelar</button>
@@ -1052,6 +1055,7 @@ window.atualizarProduto = async id => {
     minimo:    +document.getElementById('pr-min').value,
     preco:     +document.getElementById('pr-preco').value,
     custo:     +document.getElementById('pr-custo').value,
+    obs:       document.getElementById('pr-obs').value,
   });
   document.querySelector('#modal-produto .modal-footer').innerHTML = `
     <button class="btn-ghost" onclick="closeModal('modal-produto')">Cancelar</button>
@@ -1074,14 +1078,16 @@ function renderEstoque() {
     <div class="stat-row"><span class="stat-key">Valor em estoque</span><span class="stat-val">${R$(vt)}</span></div>
     <div class="stat-row"><span class="stat-key">Em alerta</span><span class="stat-val" style="color:#D85A30;">${alertas.length} itens</span></div>`;
 
-  document.getElementById('tabela-estoque').innerHTML = D.produtos.map(p => `<tr>
-    <td>${p.cod}</td><td>${p.nome}</td><td>${p.categoria}</td>
+  document.getElementById('tabela-estoque').innerHTML = D.produtos.map(p => {
+    const obsIcon = p.obs ? `<span title="${p.obs.replace(/"/g,'&quot;')}" style="cursor:help;margin-left:4px;color:#1D9E75;">💬</span>` : '';
+    return `<tr>
+    <td>${p.cod}</td><td>${p.nome}${obsIcon}</td><td>${p.categoria}</td>
     <td>${p.estoque}</td><td>${p.minimo}</td><td>${badge(sit(p.estoque,p.minimo))}</td>
     <td><div class="td-actions">
       <button class="btn-edit" onclick="editProduto('${p.id}')">Editar</button>
       <button class="btn-danger" onclick="delProduto('${p.id}')">Excluir</button>
-    </div></td></tr>`).join('')
-    || '<tr><td colspan="7"><div class="empty-state">Nenhum produto cadastrado.</div></td></tr>';
+    </div></td></tr>`;
+  }).join('') || '<tr><td colspan="7"><div class="empty-state">Nenhum produto cadastrado.</div></td></tr>';
 }
 
 // ── Clientes ───────────────────────────────────────────────────────────────
