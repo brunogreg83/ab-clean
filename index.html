@@ -1651,7 +1651,7 @@ function buildPedidoHtml(p, cli, cod, tot, itensRows) {
 '<html lang="pt-BR">\n' +
 '<head>\n' +
 '<meta charset="UTF-8">\n' +
-'<title>Pedido ' + cod + ' \u2014 AB Clean</title>\n' +
+'<title>Pedido ' + cod + ' \u2014 Atuante Qu\u00edmica</title>\n' +
 '<style>\n' +
 '@import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\');\n' +
 '* { box-sizing: border-box; margin: 0; padding: 0; }\n' +
@@ -1701,9 +1701,9 @@ function buildPedidoHtml(p, cli, cod, tot, itensRows) {
 
 '<div class="header">\n' +
 '  <div class="logo-area">\n' +
-'    <div class="company">AB Clean</div>\n' +
+'    <div class="company">Atuante Qu\u00edmica</div>\n' +
 '    <div class="tagline">Produtos de Limpeza e Higiene</div>\n' +
-'    <div class="address">Londrina \u2013 PR<br>contato@abclean.com.br</div>\n' +
+'    <div class="address">Londrina \u2013 PR<br>atuantequimicapr@gmail.com</div>\n' +
 '  </div>\n' +
 '  <div class="pedido-info">\n' +
 '    <div class="label">Pedido de Venda</div>\n' +
@@ -1721,12 +1721,16 @@ function buildPedidoHtml(p, cli, cod, tot, itensRows) {
 '<div class="section">\n' +
 '  <div class="section-title">Dados do Cliente</div>\n' +
 '  <div class="client-grid">\n' +
-'    <div class="field"><div class="fl">Razão Social</div><div class="fv">' + (cli.nome || p.cliente) + '</div></div>\n' +
+'    <div class="field"><div class="fl">Raz\u00e3o Social</div><div class="fv">' + (cli.nome || p.cliente) + '</div></div>\n' +
 '    <div class="field"><div class="fl">CNPJ</div><div class="fv">' + (cli.cnpj || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Segmento</div><div class="fv">' + (cli.segmento || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Email</div><div class="fv">' + (cli.email || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Telefone</div><div class="fv">' + (cli.tel || '—') + '</div></div>\n' +
-'    <div class="field"><div class="fl">Status do cliente</div><div class="fv">' + (cli.status || '—') + '</div></div>\n' +
+'    <div class="field"><div class="fl">Endere\u00e7o</div><div class="fv">' + (cli.endereco || '—') + '</div></div>\n' +
+'    <div class="field"><div class="fl">Cidade / Estado</div><div class="fv">' + (cli.cidade || '—') + '</div></div>\n' +
+'    <div class="field"><div class="fl">CEP</div><div class="fv">' + (cli.cep || '—') + '</div></div>\n' +
+'    <div class="field"><div class="fl">Status</div><div class="fv">' + (cli.status || '—') + '</div></div>\n' +
+(cli.obs ? '    <div class="field" style="grid-column:1/-1"><div class="fl">Observa\u00e7\u00f5es</div><div class="fv" style="color:#777;">' + cli.obs + '</div></div>\n' : '') +
 '  </div>\n' +
 '</div>\n' +
 
@@ -1760,7 +1764,7 @@ function buildPedidoHtml(p, cli, cod, tot, itensRows) {
 '<div class="stamp"><div class="stamp-box">Assinatura do Cliente</div></div>\n' +
 
 '<div class="footer">\n' +
-'  <span>AB Clean \u2013 Londrina/PR \u00B7 Documento gerado em ' + new Date().toLocaleString('pt-BR') + '</span>\n' +
+'  <span>Atuante Qu\u00edmica \u2013 Londrina/PR \u00B7 Documento gerado em ' + new Date().toLocaleString('pt-BR') + '</span>\n' +
 '  <span>Pedido ' + cod + '</span>\n' +
 '</div>\n' +
 
