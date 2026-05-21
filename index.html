@@ -561,6 +561,10 @@ tr:hover td { background: #fafaf8; }
     </div>
     <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="cl-email" type="email"></div>
     <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="cl-tel"></div>
+    <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="cl-endereco" placeholder="Rua, número, bairro"></div>
+    <div class="form-group"><label class="form-label">Cidade / Estado</label><input class="form-input" id="cl-cidade" placeholder="Ex: Londrina / PR"></div>
+    <div class="form-group"><label class="form-label">CEP</label><input class="form-input" id="cl-cep" placeholder="00000-000"></div>
+    <div class="form-group"><label class="form-label">Observações</label><textarea class="form-input" id="cl-obs" rows="3" placeholder="Informações adicionais sobre o cliente..." style="resize:vertical;"></textarea></div>
     <div class="form-group"><label class="form-label">Status</label><select class="form-input" id="cl-status"><option>Ativo</option><option>Inativo</option></select></div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
@@ -1085,26 +1089,35 @@ window.salvarCliente = async () => {
   const nome = document.getElementById('cl-nome').value;
   if (!nome) { toast('Informe o nome.'); return; }
   await add('clientes', {
-    nome, cnpj: document.getElementById('cl-cnpj').value,
-    segmento: document.getElementById('cl-seg').value,
-    email: document.getElementById('cl-email').value,
-    tel: document.getElementById('cl-tel').value,
-    status: document.getElementById('cl-status').value,
+    nome,
+    cnpj:      document.getElementById('cl-cnpj').value,
+    segmento:  document.getElementById('cl-seg').value,
+    email:     document.getElementById('cl-email').value,
+    tel:       document.getElementById('cl-tel').value,
+    endereco:  document.getElementById('cl-endereco').value,
+    cidade:    document.getElementById('cl-cidade').value,
+    cep:       document.getElementById('cl-cep').value,
+    obs:       document.getElementById('cl-obs').value,
+    status:    document.getElementById('cl-status').value,
   });
   closeModal('modal-cliente');
-  ['cl-nome','cl-cnpj','cl-seg','cl-email','cl-tel'].forEach(id => document.getElementById(id).value = '');
+  ['cl-nome','cl-cnpj','cl-email','cl-tel','cl-endereco','cl-cidade','cl-cep','cl-obs'].forEach(id => document.getElementById(id).value = '');
   toast('✅ Cliente cadastrado no Firebase!');
 };
 window.delCliente = async id => { if(!confirm('Excluir cliente?')) return; await del('clientes',id); toast('Cliente excluído.'); };
 window.editCliente = id => {
   const c = D.clientes.find(x => x.id === id);
   if (!c) return;
-  document.getElementById('cl-nome').value   = c.nome;
-  document.getElementById('cl-cnpj').value   = c.cnpj;
-  document.getElementById('cl-seg').value    = c.segmento;
-  document.getElementById('cl-email').value  = c.email;
-  document.getElementById('cl-tel').value    = c.tel;
-  document.getElementById('cl-status').value = c.status;
+  document.getElementById('cl-nome').value     = c.nome     || '';
+  document.getElementById('cl-cnpj').value     = c.cnpj     || '';
+  document.getElementById('cl-seg').value      = c.segmento || '';
+  document.getElementById('cl-email').value    = c.email    || '';
+  document.getElementById('cl-tel').value      = c.tel      || '';
+  document.getElementById('cl-endereco').value = c.endereco || '';
+  document.getElementById('cl-cidade').value   = c.cidade   || '';
+  document.getElementById('cl-cep').value      = c.cep      || '';
+  document.getElementById('cl-obs').value      = c.obs      || '';
+  document.getElementById('cl-status').value   = c.status   || 'Ativo';
   const footer = document.querySelector('#modal-cliente .modal-footer');
   footer.innerHTML = `
     <button class="btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
@@ -1113,12 +1126,16 @@ window.editCliente = id => {
 };
 window.atualizarCliente = async id => {
   await upd('clientes', id, {
-    nome:     document.getElementById('cl-nome').value,
-    cnpj:     document.getElementById('cl-cnpj').value,
-    segmento: document.getElementById('cl-seg').value,
-    email:    document.getElementById('cl-email').value,
-    tel:      document.getElementById('cl-tel').value,
-    status:   document.getElementById('cl-status').value,
+    nome:      document.getElementById('cl-nome').value,
+    cnpj:      document.getElementById('cl-cnpj').value,
+    segmento:  document.getElementById('cl-seg').value,
+    email:     document.getElementById('cl-email').value,
+    tel:       document.getElementById('cl-tel').value,
+    endereco:  document.getElementById('cl-endereco').value,
+    cidade:    document.getElementById('cl-cidade').value,
+    cep:       document.getElementById('cl-cep').value,
+    obs:       document.getElementById('cl-obs').value,
+    status:    document.getElementById('cl-status').value,
   });
   document.querySelector('#modal-cliente .modal-footer').innerHTML = `
     <button class="btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
@@ -1128,13 +1145,20 @@ window.atualizarCliente = async id => {
 
 function renderClientes() {
   document.getElementById('tabela-clientes').innerHTML = D.clientes.map(c => {
-    const ini = c.nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const ini  = c.nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
     const peds = D.pedidos.filter(p => p.cliente === c.nome);
     const tot  = peds.reduce((s,p) => s + totPed(p), 0);
     const ult  = peds.length ? fmtDt([...peds].sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0].data) : '—';
+    const endInfo = [c.endereco, c.cidade, c.cep].filter(Boolean).join(' · ') || '—';
+    const obsIcon = c.obs ? `<span title="${c.obs.replace(/"/g,'&quot;')}" style="cursor:help;margin-left:4px;color:#1D9E75;">💬</span>` : '';
     return `<tr>
-      <td><div style="display:flex;gap:9px;align-items:center;"><div class="c-avatar">${ini}</div>${c.nome}</div></td>
-      <td style="color:#999;">${c.cnpj}</td><td>${c.segmento}</td><td>${ult}</td><td>${R$(tot)}</td>
+      <td><div style="display:flex;gap:9px;align-items:center;"><div class="c-avatar">${ini}</div>
+        <div><div>${c.nome}${obsIcon}</div><div style="font-size:11px;color:#aaa;">${endInfo}</div></div>
+      </div></td>
+      <td style="color:#999;">${c.cnpj||'—'}</td>
+      <td>${c.segmento||'—'}</td>
+      <td>${ult}</td>
+      <td>${R$(tot)}</td>
       <td>${badge(c.status)}</td>
       <td><div class="td-actions">
         <button class="btn-edit" onclick="editCliente('${c.id}')">Editar</button>
