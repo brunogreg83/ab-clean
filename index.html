@@ -329,16 +329,6 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <div class="content">
       <!-- DASHBOARD -->
       <div class="screen active" id="screen-dashboard">
-        <!-- Gráfico Receitas x Despesas — primeiro -->
-        <div class="card" style="margin-bottom:22px;padding-bottom:14px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <div class="section-title" style="margin-bottom:0;">Receitas × Despesas</div>
-            <div id="dash-saldo-badge" style="font-size:13px;font-weight:600;"></div>
-          </div>
-          <div id="rxd-chart" style="width:100%;"></div>
-          <div id="rxd-legenda" style="display:flex;gap:20px;margin-top:10px;justify-content:center;font-size:11px;color:#888;flex-wrap:wrap;"></div>
-        </div>
-
         <div class="kpi-grid" id="dash-kpis">
           <div class="kpi-card"><div class="kpi-label">Aguardando Firebase...</div><div class="kpi-value">—</div></div>
           <div class="kpi-card"><div class="kpi-label">Aguardando Firebase...</div><div class="kpi-value">—</div></div>
@@ -363,6 +353,17 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
             <div class="table-wrap" style="margin:0;"><table><thead><tr><th>Pedido</th><th>Cliente</th><th>Status</th></tr></thead><tbody id="dash-pedidos"><tr><td colspan="3" style="text-align:center;color:#bbb;padding:18px;">Carregando...</td></tr></tbody></table></div>
           </div>
         </div>
+
+        <!-- Gráfico Receitas x Despesas -->
+        <div class="card" style="margin-bottom:22px;padding-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div class="section-title" style="margin-bottom:0;">Receitas × Despesas</div>
+            <div id="dash-saldo-badge" style="font-size:13px;font-weight:600;"></div>
+          </div>
+          <div id="rxd-chart" style="width:100%;"></div>
+          <div id="rxd-legenda" style="display:flex;gap:20px;margin-top:10px;justify-content:center;font-size:11px;color:#888;flex-wrap:wrap;"></div>
+        </div>
+
         <div class="card" id="dash-alertas"><div class="section-title">Alertas do sistema</div><div style="color:#bbb;font-size:13px;">Carregando dados...</div></div>
       </div>
 
