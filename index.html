@@ -1936,7 +1936,7 @@ function enviarOCPorEmail(o, forn) {
       '.footer{margin-top:32px;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:12px;}' +
       '</style></head><body>' +
       '<h1>Ordem de Compra ' + cod + '</h1>' +
-      '<div class="sub">Atuante Química — Londrina/PR — atuantequimicapr@gmail.com</div>' +
+      '<div class="sub">Atuante Química PR — Londrina/PR — atuantevendas.pr@gmail.com — Andrea Lopes · (43) 98871-2001</div>' +
       '<p>Prezado(a) <b>' + (forn.contato || forn.nome) + '</b>,</p>' +
       '<p style="margin-top:8px;">Segue abaixo nossa Ordem de Compra <b>' + cod + '</b> de ' + fmtDt(o.data) + ':</p>' +
       '<table><thead><tr><th>#</th><th>Produto</th><th>Qtd.</th><th style="text-align:right;">Custo unit.</th><th style="text-align:right;">Total</th></tr></thead>' +
@@ -1944,8 +1944,8 @@ function enviarOCPorEmail(o, forn) {
       '<div class="total">Total: R$ ' + Number(total).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</div>' +
       (o.obs ? '<p style="margin-top:16px;background:#f9f9f7;padding:12px;border-radius:6px;"><b>Observações:</b> ' + o.obs + '</p>' : '') +
       '<p style="margin-top:24px;">Aguardamos confirmação do recebimento desta OC.</p>' +
-      '<p style="margin-top:8px;">Atenciosamente,<br><b>Atuante Química</b><br>atuantequimicapr@gmail.com — Londrina/PR</p>' +
-      '<div class="footer">Este email foi gerado automaticamente pelo sistema ERP Atuante Química.</div>' +
+      '<p style="margin-top:8px;">Atenciosamente,<br><b>Atuante Química PR</b><br>atuantevendas.pr@gmail.com — Andrea Lopes · (43) 98871-2001 — Londrina/PR</p>' +
+      '<div class="footer">Este email foi gerado automaticamente pelo sistema ERP Atuante Química PR.</div>' +
       '</body></html>';
 
     emailjs.send('service_2efwo64', 'template_jfha3la', {
@@ -1988,7 +1988,7 @@ window.verOC = id => {
 
   const html =
 '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">' +
-'<title>' + cod + ' \u2014 Atuante Qu\u00edmica</title>' +
+'<title>' + cod + ' \u2014 Atuante Qu\u00edmica PR</title>' +
 '<style>' +
 '@import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\');' +
 '*{box-sizing:border-box;margin:0;padding:0;}' +
@@ -2026,8 +2026,8 @@ window.verOC = id => {
 '</div>' +
 
 '<div class="header">' +
-'<div><div class="company">Atuante Qu\u00edmica</div><div class="tagline">Produtos de Limpeza e Higiene</div>' +
-'<div class="address">Londrina \u2013 PR<br>atuantequimicapr@gmail.com</div></div>' +
+'<div><div class="company">Atuante Qu\u00edmica PR</div><div class="tagline">Produtos de Limpeza e Higiene</div>' +
+'<div class="address">Londrina \u2013 PR<br>atuantevendas.pr@gmail.com<br>Andrea Lopes · (43) 98871-2001</div></div>' +
 '<div class="oc-info"><div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.06em;">Ordem de Compra</div>' +
 '<div class="oc-cod">' + cod + '</div>' +
 '<div style="font-size:13px;color:#888;margin-top:8px;">Data: ' + fmtDt(o.data) + '</div>' +
@@ -2056,12 +2056,12 @@ window.verOC = id => {
 (o.obs ? '<div style="margin-top:20px;background:#f9f9f7;border-radius:8px;padding:12px 16px;"><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Observações</div><div style="font-size:13px;">' + o.obs + '</div></div>' : '') +
 
 '<div class="assinaturas">' +
-'<div class="assin-box">Responsável pela compra \u2014 Atuante Qu\u00edmica</div>' +
+'<div class="assin-box">Responsável pela compra \u2014 Atuante Qu\u00edmica PR</div>' +
 '<div class="assin-box">Fornecedor \u2014 ' + o.fornecedor + '</div>' +
 '</div>' +
 
 '<div class="footer">' +
-'<span>Atuante Qu\u00edmica \u2013 Londrina/PR \u00B7 Gerado em ' + new Date().toLocaleString('pt-BR') + '</span>' +
+'<span>Atuante Qu\u00edmica PR \u2013 Londrina/PR \u00B7 Gerado em ' + new Date().toLocaleString('pt-BR') + '</span>' +
 '<span>' + cod + '</span></div>' +
 
 '<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"><\/script>' +
@@ -2349,7 +2349,7 @@ function buildPedidoHtml(p, cli, cod, tot, itensRows) {
 '<html lang="pt-BR">\n' +
 '<head>\n' +
 '<meta charset="UTF-8">\n' +
-'<title>Pedido ' + cod + ' \u2014 Atuante Qu\u00edmica</title>\n' +
+'<title>Pedido ' + cod + ' \u2014 Atuante Qu\u00edmica PR</title>\n' +
 '<style>\n' +
 '@import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\');\n' +
 '* { box-sizing: border-box; margin: 0; padding: 0; }\n' +
@@ -2399,9 +2399,9 @@ function buildPedidoHtml(p, cli, cod, tot, itensRows) {
 
 '<div class="header">\n' +
 '  <div class="logo-area">\n' +
-'    <div class="company">Atuante Qu\u00edmica</div>\n' +
+'    <div class="company">Atuante Qu\u00edmica PR</div>\n' +
 '    <div class="tagline">Produtos de Limpeza e Higiene</div>\n' +
-'    <div class="address">Londrina \u2013 PR<br>atuantequimicapr@gmail.com</div>\n' +
+'    <div class="address">Londrina \u2013 PR<br>atuantevendas.pr@gmail.com<br>Andrea Lopes · (43) 98871-2001</div>\n' +
 '  </div>\n' +
 '  <div class="pedido-info">\n' +
 '    <div class="label">Pedido de Venda</div>\n' +
@@ -2463,7 +2463,7 @@ function buildPedidoHtml(p, cli, cod, tot, itensRows) {
 '<div class="stamp"><div class="stamp-box">Assinatura do Cliente</div></div>\n' +
 
 '<div class="footer">\n' +
-'  <span>Atuante Qu\u00edmica \u2013 Londrina/PR \u00B7 Documento gerado em ' + new Date().toLocaleString('pt-BR') + '</span>\n' +
+'  <span>Atuante Qu\u00edmica PR \u2013 Londrina/PR \u00B7 Documento gerado em ' + new Date().toLocaleString('pt-BR') + '</span>\n' +
 '  <span>Pedido ' + cod + '</span>\n' +
 '</div>\n' +
 
