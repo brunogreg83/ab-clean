@@ -950,6 +950,8 @@ document.addEventListener('keydown', function(e) {
 document.addEventListener('wheel', function(e) {
   if (e.target.tagName === 'INPUT') e.preventDefault();
 }, { capture: true, passive: false });
+
+window.ocItens = []; // estado global dos itens da OC
 </script>
 
 <script type="module">
@@ -1049,7 +1051,7 @@ window.openModal = id => {
   if (id === 'modal-pedido')  prepPedido();
   if (id === 'modal-receber') { document.getElementById('rec-venc').value = today(); sel('rec-cli', D.clientes.map(c=>c.nome)); }
   if (id === 'modal-oc') {
-    ocItens = [];
+    window.ocItens = [];
     document.getElementById('oc-itens').innerHTML = '';
     document.getElementById('oc-forn').value = '';
     document.getElementById('oc-obs').value  = '';
@@ -1756,35 +1758,35 @@ function renderFornecedores() {
 }
 
 // ── Compras ────────────────────────────────────────────────────────────────
-let ocItens = [];
+window.ocItens = [];
 
 window.addItemOC = () => {
-  const idx = ocItens.length;
-  ocItens.push({ produto:'', qty:1, custo:0 });
+  const idx = window.ocItens.length;
+  window.ocItens.push({ produto:'', qty:1, custo:0 });
   const opts = D.produtos.map(p => '<option value="' + p.nome + '">' + p.nome + '</option>').join('');
   const row = document.createElement('div');
   row.className = 'pi-row'; row.id = 'oci-' + idx;
   row.innerHTML =
-    '<select class="form-input" onchange="ocItens[' + idx + '].produto=this.value;autoPrecoOC(' + idx + ',this.value)">' +
+    '<select class="form-input" onchange="window.ocItens[' + idx + '].produto=this.value;autoPrecoOC(' + idx + ',this.value)">' +
       '<option value="">Selecione...</option>' + opts +
     '</select>' +
-    '<input type="text" inputmode="decimal" class="form-input" style="max-width:75px;" value="1" placeholder="Qtd" onchange="ocItens[' + idx + '].qty=+this.value">' +
-    '<input type="text" inputmode="decimal" class="form-input" style="max-width:100px;" placeholder="Custo unit." id="oci-preco-' + idx + '" onchange="ocItens[' + idx + '].custo=+this.value">' +
-    '<button class="btn-danger" onclick="document.getElementById(\'oci-' + idx + '\').remove();ocItens[' + idx + ']=null">✕</button>';
+    '<input type="text" inputmode="decimal" class="form-input" style="max-width:75px;" value="1" placeholder="Qtd" onchange="window.ocItens[' + idx + '].qty=+this.value">' +
+    '<input type="text" inputmode="decimal" class="form-input" style="max-width:100px;" placeholder="Custo unit." id="oci-preco-' + idx + '" onchange="window.ocItens[' + idx + '].custo=+this.value">' +
+    '<button class="btn-danger" onclick="document.getElementById(\'oci-' + idx + '\').remove();window.ocItens[' + idx + ']=null">✕</button>';
   document.getElementById('oc-itens').appendChild(row);
 };
 
 window.autoPrecoOC = (idx, nome) => {
   const p = D.produtos.find(x => x.nome === nome);
   if (p) {
-    ocItens[idx].custo = p.custo || 0;
+    window.ocItens[idx].custo = p.custo || 0;
     const el = document.getElementById('oci-preco-' + idx);
     if (el) el.value = p.custo || 0;
   }
 };
 
 window.salvarOC = async () => {
-  const itens = ocItens.filter(Boolean).filter(i => i.produto);
+  const itens = window.ocItens.filter(Boolean).filter(i => i.produto);
   if (!itens.length) { toast('Adicione ao menos um produto!'); return; }
   const fornecedor = document.getElementById('oc-forn').value;
   const status     = document.getElementById('oc-status').value;
@@ -1802,7 +1804,7 @@ window.salvarOC = async () => {
   }
 
   closeModal('modal-oc');
-  ocItens = [];
+  window.ocItens = [];
   document.getElementById('oc-itens').innerHTML = '';
   toast('✅ OC criada!');
 
@@ -1818,23 +1820,23 @@ window.delOC = async id => { if(!confirm('Excluir OC?')) return; await del('orde
 window.editOC = id => {
   const o = D.ordens.find(x => x.id === id);
   if (!o) return;
-  ocItens = [];
+  window.ocItens = [];
   document.getElementById('oc-itens').innerHTML = '';
   document.getElementById('oc-forn').value   = o.fornecedor || '';
   document.getElementById('oc-status').value = o.status     || 'Aguardando';
   document.getElementById('oc-obs').value    = o.obs        || '';
 
   (o.itens || []).forEach(it => {
-    const idx = ocItens.length;
-    ocItens.push({ produto: it.produto, qty: it.qty, custo: it.custo });
+    const idx = window.ocItens.length;
+    window.ocItens.push({ produto: it.produto, qty: it.qty, custo: it.custo });
     const opts = D.produtos.map(p => '<option value="' + p.nome + '"' + (p.nome===it.produto?' selected':'') + '>' + p.nome + '</option>').join('');
     const row = document.createElement('div');
     row.className = 'pi-row'; row.id = 'oci-' + idx;
     row.innerHTML =
-      '<select class="form-input" onchange="ocItens[' + idx + '].produto=this.value"><option value="">Selecione...</option>' + opts + '</select>' +
-      '<input type="text" inputmode="decimal" class="form-input" style="max-width:75px;" value="' + it.qty + '" onchange="ocItens[' + idx + '].qty=+this.value">' +
-      '<input type="text" inputmode="decimal" class="form-input" style="max-width:100px;" value="' + it.custo + '" id="oci-preco-' + idx + '" onchange="ocItens[' + idx + '].custo=+this.value">' +
-      '<button class="btn-danger" onclick="document.getElementById(\'oci-' + idx + '\').remove();ocItens[' + idx + ']=null">✕</button>';
+      '<select class="form-input" onchange="window.ocItens[' + idx + '].produto=this.value"><option value="">Selecione...</option>' + opts + '</select>' +
+      '<input type="text" inputmode="decimal" class="form-input" style="max-width:75px;" value="' + it.qty + '" onchange="window.ocItens[' + idx + '].qty=+this.value">' +
+      '<input type="text" inputmode="decimal" class="form-input" style="max-width:100px;" value="' + it.custo + '" id="oci-preco-' + idx + '" onchange="window.ocItens[' + idx + '].custo=+this.value">' +
+      '<button class="btn-danger" onclick="document.getElementById(\'oci-' + idx + '\').remove();window.ocItens[' + idx + ']=null">✕</button>';
     document.getElementById('oc-itens').appendChild(row);
   });
 
@@ -1846,7 +1848,7 @@ window.editOC = id => {
 };
 
 window.atualizarOC = async id => {
-  const itens = ocItens.filter(Boolean).filter(i => i.produto);
+  const itens = window.ocItens.filter(Boolean).filter(i => i.produto);
   if (!itens.length) { toast('Adicione ao menos um produto!'); return; }
   const total = itens.reduce((s,i) => s + i.qty * i.custo, 0);
   await upd('ordens', id, {
@@ -1862,21 +1864,21 @@ window.atualizarOC = async id => {
 };
 
 window.abrirOCProd = nome => {
-  ocItens = [];
+  window.ocItens = [];
   document.getElementById('oc-itens').innerHTML = '';
   document.getElementById('oc-forn').value = '';
   document.getElementById('oc-obs').value  = '';
   // adicionar o produto sugerido automaticamente
   const idx = 0;
-  ocItens.push({ produto: nome, qty: 1, custo: 0 });
+  window.ocItens.push({ produto: nome, qty: 1, custo: 0 });
   const opts = D.produtos.map(p => '<option value="' + p.nome + '"' + (p.nome===nome?' selected':'') + '>' + p.nome + '</option>').join('');
   const row = document.createElement('div');
   row.className = 'pi-row'; row.id = 'oci-0';
   row.innerHTML =
-    '<select class="form-input" onchange="ocItens[0].produto=this.value;autoPrecoOC(0,this.value)"><option value="">Selecione...</option>' + opts + '</select>' +
-    '<input type="text" inputmode="decimal" class="form-input" style="max-width:75px;" value="1" onchange="ocItens[0].qty=+this.value">' +
-    '<input type="text" inputmode="decimal" class="form-input" style="max-width:100px;" placeholder="Custo unit." id="oci-preco-0" onchange="ocItens[0].custo=+this.value">' +
-    '<button class="btn-danger" onclick="document.getElementById(\'oci-0\').remove();ocItens[0]=null">✕</button>';
+    '<select class="form-input" onchange="window.ocItens[0].produto=this.value;autoPrecoOC(0,this.value)"><option value="">Selecione...</option>' + opts + '</select>' +
+    '<input type="text" inputmode="decimal" class="form-input" style="max-width:75px;" value="1" onchange="window.ocItens[0].qty=+this.value">' +
+    '<input type="text" inputmode="decimal" class="form-input" style="max-width:100px;" placeholder="Custo unit." id="oci-preco-0" onchange="window.ocItens[0].custo=+this.value">' +
+    '<button class="btn-danger" onclick="document.getElementById(\'oci-0\').remove();window.ocItens[0]=null">✕</button>';
   document.getElementById('oc-itens').appendChild(row);
   autoPrecoOC(0, nome);
   document.getElementById('modal-oc').classList.add('open');
