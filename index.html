@@ -497,6 +497,27 @@ tr:hover td { background: #fafaf8; }
 </div>
 </div>
 
+<div class="modal-overlay" id="modal-cli-popup">
+  <div class="modal" style="width:520px;">
+    <div class="modal-header">
+      <span class="modal-header-title">Dados do Cliente</span>
+      <span class="modal-drag-hint"><i class="ti ti-arrows-move"></i> mover</span>
+    </div>
+    <div class="modal-body">
+      <div id="cli-popup-body"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-copiar-cli" class="btn-ghost" onclick="copiarCliente()">
+        <i class="ti ti-copy"></i> Copiar dados
+      </button>
+      <button class="btn-ghost" onclick="closeModal('modal-cli-popup')">Fechar</button>
+      <button class="btn-primary" onclick="editCliente(document.getElementById('modal-cli-popup').dataset.clienteId);closeModal('modal-cli-popup')">
+        <i class="ti ti-edit"></i> Editar
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAIS -->
 <div class="modal-overlay" id="modal-pedido">
   <div class="modal">
@@ -1109,18 +1130,38 @@ window.editPedido = id => {
 window.atualizarPedido = async id => {
   const itens = pitens.filter(Boolean).filter(i => i.produto);
   if (!itens.length) { toast('Adicione ao menos um item!'); return; }
+
+  const novoStatus = document.getElementById('ped-status').value;
+  const pedidoAntigo = D.pedidos.find(x => x.id === id);
+  const statusAntigo = pedidoAntigo?.status || 'Aguardando';
+
   await upd('pedidos', id, {
     cliente: document.getElementById('ped-cli').value,
-    status:  document.getElementById('ped-status').value,
+    status:  novoStatus,
     pgto:    document.getElementById('ped-pgto').value,
     forma:   document.getElementById('ped-forma').value,
     itens
   });
+
+  // Subtrair do estoque quando sai de "Aguardando" pela primeira vez
+  if (statusAntigo === 'Aguardando' && novoStatus !== 'Aguardando') {
+    for (const it of itens) {
+      const prod = D.produtos.find(p => p.nome === it.produto);
+      if (prod) {
+        const novoEstoque = Math.max(0, prod.estoque - it.qty);
+        await upd('produtos', prod.id, { estoque: novoEstoque });
+      }
+    }
+    toast('✅ Pedido atualizado e estoque baixado!');
+  } else {
+    toast('✅ Pedido atualizado!');
+  }
+
   // restaurar botão original
   document.querySelector('#modal-pedido .modal-footer').innerHTML = `
     <button class="btn-ghost" onclick="closeModal('modal-pedido')">Cancelar</button>
     <button class="btn-primary" onclick="salvarPedido()">Salvar pedido</button>`;
-  closeModal('modal-pedido'); toast('✅ Pedido atualizado!');
+  closeModal('modal-pedido');
 };
 
 function renderPedidos() {
@@ -1302,11 +1343,77 @@ function renderClientes() {
       <td>${R$(tot)}</td>
       <td>${badge(c.status)}</td>
       <td><div class="td-actions">
+        <button class="btn-view" onclick="verCliente('${c.id}')" title="Visualizar"><i class="ti ti-eye"></i></button>
         <button class="btn-edit" onclick="editCliente('${c.id}')">Editar</button>
         <button class="btn-danger" onclick="delCliente('${c.id}')">Excluir</button>
       </div></td></tr>`;
   }).join('') || '<tr><td colspan="7"><div class="empty-state">Nenhum cliente cadastrado.</div></td></tr>';
 }
+
+// ── Ver Cliente (popup) ────────────────────────────────────────────────────
+window.verCliente = id => {
+  const c = D.clientes.find(x => x.id === id);
+  if (!c) return;
+  const peds = D.pedidos.filter(p => p.cliente === c.nome);
+  const tot  = peds.reduce((s,p) => s + totPed(p), 0);
+  const ini  = c.nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+
+  document.getElementById('cli-popup-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+      <div style="width:52px;height:52px;border-radius:50%;background:#E1F5EE;color:#0F6E56;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;">${ini}</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;">${c.nome}</div>
+        <div style="font-size:12px;color:#aaa;margin-top:2px;">${c.segmento||'—'} · ${badge(c.status)}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;">
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">CNPJ</div><div style="font-size:13px;font-weight:500;">${c.cnpj||'—'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Telefone</div><div style="font-size:13px;font-weight:500;">${c.tel||'—'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Email</div><div style="font-size:13px;font-weight:500;">${c.email||'—'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">CEP</div><div style="font-size:13px;font-weight:500;">${c.cep||'—'}</div></div>
+      <div style="grid-column:1/-1;"><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Endereço</div><div style="font-size:13px;font-weight:500;">${[c.endereco,c.cidade].filter(Boolean).join(' — ')||'—'}</div></div>
+      ${c.obs ? `<div style="grid-column:1/-1;background:#f9f9f7;border-radius:8px;padding:10px 12px;"><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Observações</div><div style="font-size:13px;color:#555;">${c.obs}</div></div>` : ''}
+    </div>
+    <div style="border-top:1px solid #f0f0ec;margin-top:18px;padding-top:14px;display:flex;justify-content:space-between;font-size:12px;color:#888;">
+      <span>Total de pedidos: <b style="color:#1a1a18;">${peds.length}</b></span>
+      <span>Volume total: <b style="color:#1D9E75;">${R$(tot)}</b></span>
+    </div>`;
+
+  // guardar dados para copiar
+  document.getElementById('modal-cli-popup').dataset.clienteId = id;
+  openModal('modal-cli-popup');
+};
+
+window.copiarCliente = () => {
+  const id = document.getElementById('modal-cli-popup').dataset.clienteId;
+  const c  = D.clientes.find(x => x.id === id);
+  if (!c) return;
+  const txt = [
+    'DADOS DO CLIENTE',
+    '─────────────────────',
+    `Nome:     ${c.nome}`,
+    `CNPJ:     ${c.cnpj     || '—'}`,
+    `Segmento: ${c.segmento || '—'}`,
+    `Telefone: ${c.tel      || '—'}`,
+    `Email:    ${c.email    || '—'}`,
+    `Endereço: ${c.endereco || '—'}`,
+    `Cidade:   ${c.cidade   || '—'}`,
+    `CEP:      ${c.cep      || '—'}`,
+    c.obs ? `Obs:      ${c.obs}` : '',
+  ].filter(Boolean).join('\n');
+
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = document.getElementById('btn-copiar-cli');
+    btn.innerHTML = '<i class="ti ti-check"></i> Copiado!';
+    btn.style.background = '#1D9E75';
+    btn.style.color = '#fff';
+    setTimeout(() => {
+      btn.innerHTML = '<i class="ti ti-copy"></i> Copiar dados';
+      btn.style.background = '';
+      btn.style.color = '';
+    }, 2000);
+  }).catch(() => toast('Erro ao copiar. Use HTTPS ou localhost.'));
+};
 
 // ── Financeiro ─────────────────────────────────────────────────────────────
 window.salvarReceber = async () => {
