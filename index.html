@@ -776,6 +776,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <div class="modal-body">
       <div class="form-group"><label class="form-label">Nome / Razão social</label><input class="form-input" id="cl-nome"></div>
     <div class="form-group"><label class="form-label">CNPJ</label><input class="form-input" id="cl-cnpj" placeholder="00.000.000/0001-00"></div>
+    <div class="form-group"><label class="form-label">Inscrição Estadual</label><input class="form-input" id="cl-ie" placeholder="Ex: 123.456.789-00 ou ISENTO"></div>
     <div class="form-group"><label class="form-label">Segmento</label>
       <select class="form-input" id="cl-seg">
         <option value="">Selecione...</option>
@@ -1566,6 +1567,7 @@ window.salvarCliente = async () => {
   await add('clientes', {
     nome,
     cnpj:      document.getElementById('cl-cnpj').value,
+    ie:        document.getElementById('cl-ie').value,
     segmento:  document.getElementById('cl-seg').value,
     email:     document.getElementById('cl-email').value,
     tel:       document.getElementById('cl-tel').value,
@@ -1576,7 +1578,7 @@ window.salvarCliente = async () => {
     status:    document.getElementById('cl-status').value,
   });
   closeModal('modal-cliente');
-  ['cl-nome','cl-cnpj','cl-email','cl-tel','cl-endereco','cl-cidade','cl-cep','cl-obs'].forEach(id => document.getElementById(id).value = '');
+  ['cl-nome','cl-cnpj','cl-ie','cl-email','cl-tel','cl-endereco','cl-cidade','cl-cep','cl-obs'].forEach(id => document.getElementById(id).value = '');
   toast('✅ Cliente cadastrado no Firebase!');
 };
 window.delCliente = async id => { if(!confirm('Excluir cliente?')) return; await del('clientes',id); toast('Cliente excluído.'); };
@@ -1585,6 +1587,7 @@ window.editCliente = id => {
   if (!c) return;
   document.getElementById('cl-nome').value     = c.nome     || '';
   document.getElementById('cl-cnpj').value     = c.cnpj     || '';
+  document.getElementById('cl-ie').value       = c.ie       || '';
   document.getElementById('cl-seg').value      = c.segmento || '';
   document.getElementById('cl-email').value    = c.email    || '';
   document.getElementById('cl-tel').value      = c.tel      || '';
@@ -1603,6 +1606,7 @@ window.atualizarCliente = async id => {
   await upd('clientes', id, {
     nome:      document.getElementById('cl-nome').value,
     cnpj:      document.getElementById('cl-cnpj').value,
+    ie:        document.getElementById('cl-ie').value,
     segmento:  document.getElementById('cl-seg').value,
     email:     document.getElementById('cl-email').value,
     tel:       document.getElementById('cl-tel').value,
@@ -1661,6 +1665,7 @@ window.verCliente = id => {
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;">
       <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">CNPJ</div><div style="font-size:13px;font-weight:500;">${c.cnpj||'—'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Inscrição Estadual</div><div style="font-size:13px;font-weight:500;">${c.ie||'—'}</div></div>
       <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Telefone</div><div style="font-size:13px;font-weight:500;">${c.tel||'—'}</div></div>
       <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Email</div><div style="font-size:13px;font-weight:500;">${c.email||'—'}</div></div>
       <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">CEP</div><div style="font-size:13px;font-weight:500;">${c.cep||'—'}</div></div>
@@ -2680,6 +2685,7 @@ function buildPedidoHtml(p, cli, cod, tot, itensRows) {
 '  <div class="client-grid">\n' +
 '    <div class="field"><div class="fl">Raz\u00e3o Social</div><div class="fv">' + (cli.nome || p.cliente) + '</div></div>\n' +
 '    <div class="field"><div class="fl">CNPJ</div><div class="fv">' + (cli.cnpj || '—') + '</div></div>\n' +
+'    <div class="field"><div class="fl">Inscri\u00e7\u00e3o Estadual</div><div class="fv">' + (cli.ie || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Segmento</div><div class="fv">' + (cli.segmento || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Email</div><div class="fv">' + (cli.email || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Telefone</div><div class="fv">' + (cli.tel || '—') + '</div></div>\n' +
@@ -2842,6 +2848,7 @@ window.abrirEmissaoNF = id => {
     '👤 DESTINATÁRIO (TOMADOR)',
     '  Nome/Razão Social: ' + (cli.nome || p.cliente),
     '  CNPJ/CPF:          ' + (cli.cnpj || '—'),
+    '  Insc. Estadual:    ' + (cli.ie   || '—'),
     '  Endereço:          ' + (cli.endereco || '—'),
     '  Cidade/UF:         ' + (cli.cidade || '—'),
     '  Email:             ' + (cli.email || '—'),
