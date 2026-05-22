@@ -350,6 +350,16 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
           </div>
         </div>
         <div class="card" id="dash-alertas"><div class="section-title">Alertas do sistema</div><div style="color:#bbb;font-size:13px;">Carregando dados...</div></div>
+
+        <!-- Gráfico Receitas x Despesas -->
+        <div class="card" style="margin-top:0;padding-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div class="section-title" style="margin-bottom:0;">Receitas × Despesas</div>
+            <div id="dash-saldo-badge" style="font-size:13px;font-weight:600;"></div>
+          </div>
+          <div id="rxd-chart" style="width:100%;"></div>
+          <div id="rxd-legenda" style="display:flex;gap:20px;margin-top:10px;justify-content:center;font-size:11px;color:#888;flex-wrap:wrap;"></div>
+        </div>
       </div>
 
       <!-- VENDAS -->
@@ -395,6 +405,16 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
       <!-- FINANCEIRO -->
       <div class="screen" id="screen-financeiro">
         <div class="three-col" id="fin-kpis"></div>
+
+        <!-- Gráfico Receitas x Despesas -->
+        <div class="card" style="margin-bottom:22px;padding-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div class="section-title" style="margin-bottom:0;">Receitas × Despesas</div>
+            <div id="fin-saldo-badge" style="font-size:13px;font-weight:600;"></div>
+          </div>
+          <div id="fin-rxd-chart" style="width:100%;"></div>
+          <div id="fin-rxd-legenda" style="display:flex;gap:20px;margin-top:10px;justify-content:center;font-size:11px;color:#888;flex-wrap:wrap;"></div>
+        </div>
         <div class="two-col">
           <div class="card">
             <div class="section-title">Contas a receber</div>
@@ -1628,6 +1648,9 @@ function renderFinanceiro() {
       <button class="btn-danger" onclick="delPagar('${p.id}')">✕</button>
     </div></td></tr>`).join('')
     || '<tr><td colspan="5"><div class="empty-state">Nenhuma conta.</div></td></tr>';
+
+  // Gráfico Receitas × Despesas no Financeiro
+  setTimeout(() => desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tR, tP), 0);
 }
 
 // ── Fornecedores ───────────────────────────────────────────────────────────
@@ -2138,6 +2161,86 @@ function renderCompras() {
     || '<tr><td colspan="7"><div class="empty-state">Nenhuma OC.</div></td></tr>';
 }
 
+// ── Gráfico Receitas × Despesas ────────────────────────────────────────────
+function desenharRxD(containerId, legendaId, badgeId, receitas, despesas) {
+  const container = document.getElementById(containerId);
+  const legenda   = document.getElementById(legendaId);
+  const badge     = document.getElementById(badgeId);
+  if (!container) return;
+
+  const saldo = receitas - despesas;
+  if (badge) {
+    badge.textContent = 'Saldo: ' + R$(saldo);
+    badge.style.color = saldo >= 0 ? '#1D9E75' : '#D85A30';
+  }
+
+  const W = 460, H = 160;
+  const PAD = { top: 28, bot: 28, l: 12, r: 12 };
+  const chartH = H - PAD.top - PAD.bot;
+  const mx     = Math.max(receitas, despesas, 1);
+
+  const barW   = 80;
+  const gap    = 40;
+  const totalW = 2 * barW + gap;
+  const startX = (W - totalW) / 2;
+
+  const hR = Math.max(Math.round(receitas / mx * chartH), receitas > 0 ? 4 : 2);
+  const hD = Math.max(Math.round(despesas / mx * chartH), despesas > 0 ? 4 : 2);
+
+  const yR = PAD.top + chartH - hR;
+  const yD = PAD.top + chartH - hD;
+  const xR = startX;
+  const xD = startX + barW + gap;
+
+  const fmtV = v => v >= 1000 ? 'R$ ' + (v/1000).toFixed(1) + 'k' : 'R$ ' + v;
+
+  const svg =
+  `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:${H}px;display:block;">
+    <!-- linha base -->
+    <line x1="${PAD.l}" y1="${PAD.top + chartH}" x2="${W - PAD.r}" y2="${PAD.top + chartH}" stroke="#f0f0ec" stroke-width="1"/>
+
+    <!-- barra receitas -->
+    <defs>
+      <linearGradient id="gradR" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1D9E75"/>
+        <stop offset="100%" stop-color="#9FE1CB"/>
+      </linearGradient>
+      <linearGradient id="gradD" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#D85A30"/>
+        <stop offset="100%" stop-color="#F5C6A0"/>
+      </linearGradient>
+    </defs>
+
+    <rect x="${xR}" y="${yR}" width="${barW}" height="${hR}" rx="6" ry="6" fill="url(#gradR)"/>
+    <text x="${xR + barW/2}" y="${yR - 6}" text-anchor="middle" font-size="11" font-weight="600" fill="#0F6E56">${fmtV(receitas)}</text>
+    <text x="${xR + barW/2}" y="${PAD.top + chartH + 16}" text-anchor="middle" font-size="11" fill="#888">Receitas</text>
+
+    <!-- barra despesas -->
+    <rect x="${xD}" y="${yD}" width="${barW}" height="${hD}" rx="6" ry="6" fill="url(#gradD)"/>
+    <text x="${xD + barW/2}" y="${yD - 6}" text-anchor="middle" font-size="11" font-weight="600" fill="#A32D2D">${fmtV(despesas)}</text>
+    <text x="${xD + barW/2}" y="${PAD.top + chartH + 16}" text-anchor="middle" font-size="11" fill="#888">Despesas</text>
+
+    <!-- linha de saldo -->
+    <line x1="${xR}" y1="${PAD.top + chartH - Math.round(Math.min(receitas,despesas)/mx*chartH)}"
+          x2="${xD + barW}" y2="${PAD.top + chartH - Math.round(Math.min(receitas,despesas)/mx*chartH)}"
+          stroke="${saldo >= 0 ? '#1D9E75' : '#D85A30'}" stroke-width="1.5" stroke-dasharray="4 3"/>
+  </svg>`;
+
+  container.innerHTML = svg;
+
+  if (legenda) {
+    legenda.innerHTML =
+      '<span style="display:flex;align-items:center;gap:4px;">' +
+        '<span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block;"></span>' +
+        'Receitas · ' + R$(receitas) + '</span>' +
+      '<span style="display:flex;align-items:center;gap:4px;">' +
+        '<span style="width:10px;height:10px;border-radius:2px;background:#D85A30;display:inline-block;"></span>' +
+        'Despesas · ' + R$(despesas) + '</span>' +
+      '<span style="display:flex;align-items:center;gap:4px;font-weight:600;color:' + (saldo>=0?'#1D9E75':'#D85A30') + ';">' +
+        'Saldo · ' + R$(saldo) + '</span>';
+  }
+}
+
 // ── Dashboard ──────────────────────────────────────────────────────────────
 function renderDashboard() {
   const fat  = D.pedidos.filter(p=>p.status==='Entregue').reduce((s,p)=>s+totPed(p),0);
@@ -2303,6 +2406,11 @@ function renderDashboard() {
     }
   }
   setTimeout(desenharGrafico, 0);
+
+  // Gráfico Receitas × Despesas no Dashboard
+  const tRec = D.receber.reduce((s,r)=>s+r.valor,0);
+  const tPag = D.pagar.reduce((s,p)=>s+p.valor,0);
+  setTimeout(() => desenharRxD('rxd-chart','rxd-legenda','dash-saldo-badge', tRec, tPag), 0);
 }
 
 // ── Relatórios ─────────────────────────────────────────────────────────────
