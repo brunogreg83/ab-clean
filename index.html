@@ -952,7 +952,18 @@ window.openModal = id => {
   if (id === 'modal-oc')      sel('oc-prod', D.produtos.map(p=>p.nome));
   document.getElementById(id).classList.add('open');
 };
-window.closeModal = id => document.getElementById(id).classList.remove('open');
+window.closeModal = id => {
+  document.getElementById(id).classList.remove('open');
+  // ao fechar modal de pedido, restaurar botão para "Salvar pedido"
+  if (id === 'modal-pedido') {
+    const footer = document.querySelector('#modal-pedido .modal-footer');
+    if (footer && !footer.querySelector('[onclick="salvarPedido()"]')) {
+      footer.innerHTML =
+        '<button class="btn-ghost" onclick="closeModal(\'modal-pedido\')">Cancelar</button>' +
+        '<button class="btn-primary" onclick="salvarPedido()">Salvar pedido</button>';
+    }
+  }
+};
 // Modais fecham apenas via botão Cancelar/Salvar
 
 // ── Drag-and-drop nos modais ───────────────────────────────────────────────
@@ -1125,7 +1136,8 @@ window.editPedido = id => {
     '<button class="btn-ghost" onclick="closeModal(\'modal-pedido\')">Cancelar</button>' +
     '<button class="btn-primary" onclick="atualizarPedido(\'' + id + '\')">Salvar alterações</button>';
 
-  openModal('modal-pedido');
+  // abrir overlay DIRETAMENTE sem chamar openModal (que chamaria prepPedido e limparia tudo)
+  document.getElementById('modal-pedido').classList.add('open');
 };
 window.atualizarPedido = async id => {
   const itens = pitens.filter(Boolean).filter(i => i.produto);
