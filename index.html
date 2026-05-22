@@ -1969,7 +1969,11 @@ window.verOC = id => {
   if (!o) { toast('OC não encontrada.'); return; }
   const forn = D.fornecedores.find(f => f.nome === o.fornecedor) || {};
   const cod  = 'OC-' + o.id.slice(-6).toUpperCase();
-  const itens = (o.itens || []);
+
+  // compatibilidade com OCs antigas (estrutura de produto único)
+  const itens = (o.itens && o.itens.length)
+    ? o.itens
+    : o.produto ? [{ produto: o.produto, qty: o.qty || 1, custo: o.total || 0 }] : [];
   const total = o.total || itens.reduce((s,i)=>s+i.qty*i.custo,0);
 
   const itensRows = itens.map((it,i) =>
