@@ -411,12 +411,23 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 
       <!-- COMPRAS -->
       <div class="screen" id="screen-compras">
-        <div style="display:flex;gap:8px;margin-bottom:18px;">
+        <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
           <button class="btn-primary" onclick="openModal('modal-oc')"><i class="ti ti-plus"></i> Nova ordem de compra</button>
+          <button class="btn-ghost" onclick="openModal('modal-fornecedor')"><i class="ti ti-building-store"></i> Novo fornecedor</button>
         </div>
+
+        <!-- Fornecedores cadastrados -->
+        <div class="card" style="margin-bottom:22px;">
+          <div class="section-title">Fornecedores cadastrados</div>
+          <div class="table-wrap" style="margin:0;">
+            <table><thead><tr><th>Empresa</th><th>CNPJ</th><th>Contato</th><th>Telefone</th><th>Email</th><th>Produtos</th><th>Status</th><th></th></tr></thead>
+            <tbody id="tabela-fornecedores"></tbody></table>
+          </div>
+        </div>
+
         <div class="two-col">
           <div class="card"><div class="section-title">Sugestão de reposição automática</div><div id="cmp-sugestoes"></div></div>
-          <div class="card"><div class="section-title">Fornecedores</div><div id="cmp-forn"></div></div>
+          <div class="card"><div class="section-title">Fornecedores ativos (resumo)</div><div id="cmp-forn"></div></div>
         </div>
         <div class="table-wrap">
           <table><thead><tr><th>Nº OC</th><th>Fornecedor</th><th>Data</th><th>Total</th><th>Status</th><th></th></tr></thead>
@@ -518,6 +529,34 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
       <button class="btn-primary" onclick="editCliente(document.getElementById('modal-cli-popup').dataset.clienteId);closeModal('modal-cli-popup')">
         <i class="ti ti-edit"></i> Editar
       </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-fornecedor">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-header-title">Novo Fornecedor</span><span class="modal-drag-hint"><i class="ti ti-arrows-move"></i> mover</span></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Razão social</label><input class="form-input" id="forn-nome" placeholder="Ex: Química SP Ltda"></div>
+      <div class="form-group"><label class="form-label">CNPJ</label><input class="form-input" id="forn-cnpj" placeholder="00.000.000/0001-00"></div>
+      <div class="form-group"><label class="form-label">Nome do contato</label><input class="form-input" id="forn-contato" placeholder="Ex: João Silva"></div>
+      <div class="form-group"><label class="form-label">Telefone / WhatsApp</label><input class="form-input" id="forn-tel" placeholder="(43) 99999-9999"></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="forn-email" type="email" placeholder="contato@fornecedor.com"></div>
+      <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="forn-endereco" placeholder="Rua, número, bairro"></div>
+      <div class="form-group"><label class="form-label">Cidade / Estado</label><input class="form-input" id="forn-cidade" placeholder="Ex: São Paulo / SP"></div>
+      <div class="form-group"><label class="form-label">Produtos fornecidos</label><input class="form-input" id="forn-produtos" placeholder="Ex: Detergentes, Sanitizantes..."></div>
+      <div class="form-group"><label class="form-label">Prazo de entrega médio</label><input class="form-input" id="forn-prazo" placeholder="Ex: 3 dias úteis"></div>
+      <div class="form-group"><label class="form-label">Condição de pagamento padrão</label><input class="form-input" id="forn-pgto" placeholder="Ex: 30 dias"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-input" id="forn-status"><option>Ativo</option><option>Inativo</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label>
+        <textarea class="form-input" id="forn-obs" rows="3" placeholder="Informações adicionais..." style="resize:vertical;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-fornecedor')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarFornecedor()">Salvar fornecedor</button>
     </div>
   </div>
 </div>
@@ -670,7 +709,10 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   <div class="modal">
     <div class="modal-header"><span class="modal-header-title">Nova Ordem de Compra</span><span class="modal-drag-hint"><i class="ti ti-arrows-move"></i> mover</span></div>
     <div class="modal-body">
-      <div class="form-group"><label class="form-label">Fornecedor</label><input class="form-input" id="oc-forn"></div>
+      <div class="form-group"><label class="form-label">Fornecedor</label>
+        <input class="form-input" id="oc-forn" placeholder="Digite ou selecione..." list="forn-datalist">
+        <datalist id="forn-datalist"></datalist>
+      </div>
     <div class="form-group"><label class="form-label">Produto</label><select class="form-input" id="oc-prod"></select></div>
     <div class="form-group"><label class="form-label">Quantidade</label><input class="form-input" type="text" inputmode="decimal" id="oc-qtd" value="50" min="1"ArrowUp'||event.key=='ArrowDown')event.preventDefault()"></div>
     <div class="form-group"><label class="form-label">Valor total (R$)</label><input class="form-input" type="text" inputmode="decimal" id="oc-val" step="0.01" min="0"ArrowUp'||event.key=='ArrowDown')event.preventDefault()"></div>
@@ -923,7 +965,7 @@ const app = initializeApp(cfg);
 const db  = getFirestore(app);
 
 // ── Cache local ────────────────────────────────────────────────────────────
-const D = { pedidos:[], produtos:[], clientes:[], receber:[], pagar:[], ordens:[], usuarios:[] };
+const D = { pedidos:[], produtos:[], clientes:[], receber:[], pagar:[], ordens:[], usuarios:[], fornecedores:[] };
 
 // ── Sync indicator ─────────────────────────────────────────────────────────
 const dot  = document.getElementById('sync-dot');
@@ -939,7 +981,7 @@ function syncErr() {
 
 // ── Real-time listeners ────────────────────────────────────────────────────
 let loaded = {};
-['pedidos','produtos','clientes','receber','pagar','ordens','usuarios'].forEach(col => {
+['pedidos','produtos','clientes','receber','pagar','ordens','usuarios','fornecedores'].forEach(col => {
   onSnapshot(
     collection(db, col),
     snap => {
@@ -1001,7 +1043,14 @@ window.filtrar = (id, q) => {
 window.openModal = id => {
   if (id === 'modal-pedido')  prepPedido();
   if (id === 'modal-receber') { document.getElementById('rec-venc').value = today(); sel('rec-cli', D.clientes.map(c=>c.nome)); }
-  if (id === 'modal-oc')      sel('oc-prod', D.produtos.map(p=>p.nome));
+  if (id === 'modal-oc') {
+    sel('oc-prod', D.produtos.map(p=>p.nome));
+    // popular fornecedores cadastrados no campo de texto via datalist
+    const fList = document.getElementById('forn-datalist');
+    if (fList) {
+      fList.innerHTML = D.fornecedores.filter(f=>f.status==='Ativo').map(f=>`<option value="${f.nome}">`).join('');
+    }
+  }
   document.getElementById(id).classList.add('open');
 };
 window.closeModal = id => {
@@ -1572,6 +1621,133 @@ function renderFinanceiro() {
     || '<tr><td colspan="5"><div class="empty-state">Nenhuma conta.</div></td></tr>';
 }
 
+// ── Fornecedores ───────────────────────────────────────────────────────────
+window.salvarFornecedor = async () => {
+  const nome = document.getElementById('forn-nome').value.trim();
+  if (!nome) { toast('Informe o nome do fornecedor.'); return; }
+  await add('fornecedores', {
+    nome,
+    cnpj:      document.getElementById('forn-cnpj').value,
+    contato:   document.getElementById('forn-contato').value,
+    tel:       document.getElementById('forn-tel').value,
+    email:     document.getElementById('forn-email').value,
+    endereco:  document.getElementById('forn-endereco').value,
+    cidade:    document.getElementById('forn-cidade').value,
+    produtos:  document.getElementById('forn-produtos').value,
+    prazo:     document.getElementById('forn-prazo').value,
+    pgto:      document.getElementById('forn-pgto').value,
+    status:    document.getElementById('forn-status').value,
+    obs:       document.getElementById('forn-obs').value,
+  });
+  closeModal('modal-fornecedor');
+  ['forn-nome','forn-cnpj','forn-contato','forn-tel','forn-email','forn-endereco','forn-cidade','forn-produtos','forn-prazo','forn-pgto','forn-obs']
+    .forEach(id => document.getElementById(id).value = '');
+  toast('✅ Fornecedor cadastrado!');
+};
+
+window.delFornecedor = async id => {
+  if (!confirm('Excluir fornecedor?')) return;
+  await del('fornecedores', id); toast('Fornecedor excluído.');
+};
+
+window.editFornecedor = id => {
+  const f = D.fornecedores.find(x => x.id === id);
+  if (!f) return;
+  document.getElementById('forn-nome').value     = f.nome     || '';
+  document.getElementById('forn-cnpj').value     = f.cnpj     || '';
+  document.getElementById('forn-contato').value  = f.contato  || '';
+  document.getElementById('forn-tel').value      = f.tel      || '';
+  document.getElementById('forn-email').value    = f.email    || '';
+  document.getElementById('forn-endereco').value = f.endereco || '';
+  document.getElementById('forn-cidade').value   = f.cidade   || '';
+  document.getElementById('forn-produtos').value = f.produtos || '';
+  document.getElementById('forn-prazo').value    = f.prazo    || '';
+  document.getElementById('forn-pgto').value     = f.pgto     || '';
+  document.getElementById('forn-status').value   = f.status   || 'Ativo';
+  document.getElementById('forn-obs').value      = f.obs      || '';
+  const footer = document.querySelector('#modal-fornecedor .modal-footer');
+  footer.innerHTML =
+    '<button class="btn-ghost" onclick="closeModal(\'modal-fornecedor\')">Cancelar</button>' +
+    '<button class="btn-primary" onclick="atualizarFornecedor(\'' + id + '\')">Salvar alterações</button>';
+  document.getElementById('modal-fornecedor').classList.add('open');
+};
+
+window.atualizarFornecedor = async id => {
+  await upd('fornecedores', id, {
+    nome:      document.getElementById('forn-nome').value,
+    cnpj:      document.getElementById('forn-cnpj').value,
+    contato:   document.getElementById('forn-contato').value,
+    tel:       document.getElementById('forn-tel').value,
+    email:     document.getElementById('forn-email').value,
+    endereco:  document.getElementById('forn-endereco').value,
+    cidade:    document.getElementById('forn-cidade').value,
+    produtos:  document.getElementById('forn-produtos').value,
+    prazo:     document.getElementById('forn-prazo').value,
+    pgto:      document.getElementById('forn-pgto').value,
+    status:    document.getElementById('forn-status').value,
+    obs:       document.getElementById('forn-obs').value,
+  });
+  document.querySelector('#modal-fornecedor .modal-footer').innerHTML =
+    '<button class="btn-ghost" onclick="closeModal(\'modal-fornecedor\')">Cancelar</button>' +
+    '<button class="btn-primary" onclick="salvarFornecedor()">Salvar fornecedor</button>';
+  closeModal('modal-fornecedor'); toast('✅ Fornecedor atualizado!');
+};
+
+window.verFornecedor = id => {
+  const f = D.fornecedores.find(x => x.id === id);
+  if (!f) return;
+  const ini = f.nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const ocs = D.ordens.filter(o => o.fornecedor === f.nome);
+  const totOC = ocs.reduce((s,o) => s+o.total, 0);
+  document.getElementById('cli-popup-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+      <div style="width:52px;height:52px;border-radius:50%;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;">${ini}</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;">${f.nome}</div>
+        <div style="font-size:12px;color:#aaa;margin-top:2px;">${f.cidade||'—'} · ${badge(f.status)}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;">
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">CNPJ</div><div style="font-size:13px;font-weight:500;">${f.cnpj||'—'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Contato</div><div style="font-size:13px;font-weight:500;">${f.contato||'—'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Telefone</div><div style="font-size:13px;font-weight:500;">${f.tel||'—'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Email</div><div style="font-size:13px;font-weight:500;">${f.email||'—'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Prazo entrega</div><div style="font-size:13px;font-weight:500;">${f.prazo||'—'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Condição pgto</div><div style="font-size:13px;font-weight:500;">${f.pgto||'—'}</div></div>
+      <div style="grid-column:1/-1;"><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Produtos fornecidos</div><div style="font-size:13px;font-weight:500;">${f.produtos||'—'}</div></div>
+      ${f.obs ? `<div style="grid-column:1/-1;background:#f9f9f7;border-radius:8px;padding:10px 12px;"><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Observações</div><div style="font-size:13px;color:#555;">${f.obs}</div></div>` : ''}
+    </div>
+    <div style="border-top:1px solid #f0f0ec;margin-top:18px;padding-top:14px;display:flex;justify-content:space-between;font-size:12px;color:#888;">
+      <span>Ordens de compra: <b style="color:#1a1a18;">${ocs.length}</b></span>
+      <span>Volume total: <b style="color:#1D9E75;">${R$(totOC)}</b></span>
+    </div>`;
+  document.getElementById('modal-cli-popup').dataset.clienteId = '_forn_' + id;
+  openModal('modal-cli-popup');
+};
+
+function renderFornecedores() {
+  const tbody = document.getElementById('tabela-fornecedores');
+  if (!tbody) return;
+  tbody.innerHTML = D.fornecedores.length
+    ? D.fornecedores.map(f => {
+        const obsIcon = f.obs ? `<span title="${f.obs.replace(/"/g,'&quot;')}" style="cursor:help;margin-left:4px;color:#185FA5;">💬</span>` : '';
+        return `<tr>
+          <td><b>${f.nome}</b>${obsIcon}<br><span style="font-size:11px;color:#aaa;">${f.cidade||''}</span></td>
+          <td style="color:#999;">${f.cnpj||'—'}</td>
+          <td>${f.contato||'—'}</td>
+          <td>${f.tel||'—'}</td>
+          <td>${f.email||'—'}</td>
+          <td style="font-size:12px;color:#666;">${f.produtos||'—'}</td>
+          <td>${badge(f.status)}</td>
+          <td><div class="td-actions">
+            <button class="btn-view" onclick="verFornecedor('${f.id}')" title="Visualizar"><i class="ti ti-eye"></i></button>
+            <button class="btn-edit" onclick="editFornecedor('${f.id}')">Editar</button>
+            <button class="btn-danger" onclick="delFornecedor('${f.id}')">Excluir</button>
+          </div></td></tr>`;
+      }).join('')
+    : '<tr><td colspan="8"><div class="empty-state">Nenhum fornecedor cadastrado.</div></td></tr>';
+}
+
 // ── Compras ────────────────────────────────────────────────────────────────
 window.salvarOC = async () => {
   const prod = document.getElementById('oc-prod').value;
@@ -1627,10 +1803,18 @@ function renderCompras() {
         <button class="btn-primary" style="font-size:12px;padding:5px 12px;" onclick="abrirOCProd('${p.nome}')">Comprar</button></div>`).join('')
     : '<div class="empty-state" style="padding:16px;">Nenhuma reposição necessária.</div>';
 
-  const fors = [...new Set(D.ordens.map(o=>o.fornecedor))];
+  // select de fornecedor na OC usa fornecedores cadastrados
+  const fornNomes = D.fornecedores.length
+    ? D.fornecedores.filter(f=>f.status==='Ativo').map(f=>f.nome)
+    : [...new Set(D.ordens.map(o=>o.fornecedor))];
+
+  const fors = D.fornecedores.length ? D.fornecedores : [];
   document.getElementById('cmp-forn').innerHTML = fors.length
-    ? fors.map(f=>`<div class="stat-row"><span class="stat-key">${f}</span><span class="badge badge-green">Ativo</span></div>`).join('')
-    : '<div class="empty-state">Nenhum fornecedor ainda.</div>';
+    ? fors.map(f=>`<div class="stat-row">
+        <span class="stat-key"><b>${f.nome}</b>${f.contato?' · '+f.contato:''}</span>
+        ${badge(f.status)}
+      </div>`).join('')
+    : '<div class="empty-state">Nenhum fornecedor cadastrado.</div>';
 
   document.getElementById('tabela-compras').innerHTML = [...D.ordens]
     .sort((a,b)=>(b.data||'').localeCompare(a.data||''))
@@ -2129,7 +2313,7 @@ window.goTo = (id, btn) => {
 };
 
 function renderAll() {
-  renderDashboard(); renderPedidos(); renderEstoque(); renderClientes(); renderFinanceiro(); renderCompras(); renderUsuarios();
+  renderDashboard(); renderPedidos(); renderEstoque(); renderClientes(); renderFinanceiro(); renderCompras(); renderUsuarios(); renderFornecedores();
 }
 
 // expor globalmente para o onchange do select funcionar
