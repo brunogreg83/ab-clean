@@ -859,10 +859,47 @@ document.addEventListener('click', () => {
 
 <script>
 document.addEventListener('keydown', function(e) {
-  if (!e.target || e.target.tagName !== 'INPUT') return;
-  const bloqueadas = ['ArrowUp','ArrowDown','PageUp','PageDown','Home','End'];
-  if (bloqueadas.includes(e.key)) e.preventDefault();
+  const el = e.target;
+  if (!el || el.tagName !== 'INPUT') return;
+
+  const key = e.key;
+
+  // Setas ← → já funcionam nativamente — deixar passar
+  if (key === 'ArrowLeft' || key === 'ArrowRight') return;
+
+  // ↑ no teclado gera PageUp — mover cursor para o início
+  if (key === 'ArrowUp' || key === 'PageUp') {
+    e.preventDefault();
+    const pos = el.selectionStart ?? 0;
+    const newPos = Math.max(0, pos - 1);
+    el.setSelectionRange(newPos, newPos);
+    return;
+  }
+
+  // ↓ no teclado gera PageDown — mover cursor para o fim
+  if (key === 'ArrowDown' || key === 'PageDown') {
+    e.preventDefault();
+    const pos = el.selectionStart ?? el.value.length;
+    const newPos = Math.min(el.value.length, pos + 1);
+    el.setSelectionRange(newPos, newPos);
+    return;
+  }
+
+  // Home — início do campo
+  if (key === 'Home') {
+    e.preventDefault();
+    el.setSelectionRange(0, 0);
+    return;
+  }
+
+  // End — fim do campo
+  if (key === 'End') {
+    e.preventDefault();
+    el.setSelectionRange(el.value.length, el.value.length);
+    return;
+  }
 }, true);
+
 document.addEventListener('wheel', function(e) {
   if (e.target.tagName === 'INPUT') e.preventDefault();
 }, { capture: true, passive: false });
