@@ -239,11 +239,11 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
     <div class="form-group">
       <label class="form-label">Usuário</label>
-      <input class="form-input" type="text" id="inp-login" placeholder="Digite seu usuário" onkeydown="if(event.key==='Enter')fazerLogin()">
+      <input class="form-input" type="text" id="inp-login" placeholder="Digite seu usuário"Enter')fazerLogin()">
     </div>
     <div class="form-group">
       <label class="form-label">Senha</label>
-      <input class="form-input" type="password" id="inp-senha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')fazerLogin()">
+      <input class="form-input" type="password" id="inp-senha" placeholder="Digite sua senha"Enter')fazerLogin()">
     </div>
     <button class="login-btn" onclick="fazerLogin()">Entrar</button>
   </div>
@@ -584,10 +584,10 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
         <option>Outros</option>
       </select>
     </div>
-    <div class="form-group"><label class="form-label">Estoque atual</label><input class="form-input" type="text" inputmode="decimal" id="pr-est" value="0" min="0"></div>
-    <div class="form-group"><label class="form-label">Estoque mínimo</label><input class="form-input" type="text" inputmode="decimal" id="pr-min" value="10" min="0"></div>
-    <div class="form-group"><label class="form-label">Preço de venda (R$)</label><input class="form-input" type="text" inputmode="decimal" id="pr-preco" value="0" step="0.01"></div>
-    <div class="form-group"><label class="form-label">Custo (R$)</label><input class="form-input" type="text" inputmode="decimal" id="pr-custo" value="0" step="0.01"></div>
+    <div class="form-group"><label class="form-label">Estoque atual</label><input class="form-input" type="text" inputmode="decimal" id="pr-est" value="0" min="0"ArrowUp'||event.key=='ArrowDown')event.preventDefault()"></div>
+    <div class="form-group"><label class="form-label">Estoque mínimo</label><input class="form-input" type="text" inputmode="decimal" id="pr-min" value="10" min="0"ArrowUp'||event.key=='ArrowDown')event.preventDefault()"></div>
+    <div class="form-group"><label class="form-label">Preço de venda (R$)</label><input class="form-input" type="text" inputmode="decimal" id="pr-preco" value="0" step="0.01"ArrowUp'||event.key=='ArrowDown')event.preventDefault()"></div>
+    <div class="form-group"><label class="form-label">Custo (R$)</label><input class="form-input" type="text" inputmode="decimal" id="pr-custo" value="0" step="0.01"ArrowUp'||event.key=='ArrowDown')event.preventDefault()"></div>
     <div class="form-group"><label class="form-label">Observações</label><textarea class="form-input" id="pr-obs" rows="3" placeholder="Informações adicionais sobre o produto..." style="resize:vertical;"></textarea></div>
     </div>
     <div class="modal-footer">
@@ -639,7 +639,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <div class="modal-header"><span class="modal-header-title">Lançar título a receber</span><span class="modal-drag-hint"><i class="ti ti-arrows-move"></i> mover</span></div>
     <div class="modal-body">
       <div class="form-group"><label class="form-label">Cliente</label><select class="form-input" id="rec-cli"></select></div>
-    <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="text" inputmode="decimal" id="rec-val" step="0.01" min="0"></div>
+    <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="text" inputmode="decimal" id="rec-val" step="0.01" min="0"ArrowUp'||event.key=='ArrowDown')event.preventDefault()"></div>
     <div class="form-group"><label class="form-label">Vencimento</label><input class="form-input" type="date" id="rec-venc"></div>
     <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="rec-desc"></div>
     </div>
@@ -655,7 +655,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <div class="modal-header"><span class="modal-header-title">Lançar conta a pagar</span><span class="modal-drag-hint"><i class="ti ti-arrows-move"></i> mover</span></div>
     <div class="modal-body">
       <div class="form-group"><label class="form-label">Fornecedor</label><input class="form-input" id="pag-forn"></div>
-    <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="text" inputmode="decimal" id="pag-val" step="0.01" min="0"></div>
+    <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="text" inputmode="decimal" id="pag-val" step="0.01" min="0"ArrowUp'||event.key=='ArrowDown')event.preventDefault()"></div>
     <div class="form-group"><label class="form-label">Vencimento</label><input class="form-input" type="date" id="pag-venc"></div>
     <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="pag-desc"></div>
     </div>
@@ -672,8 +672,8 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <div class="modal-body">
       <div class="form-group"><label class="form-label">Fornecedor</label><input class="form-input" id="oc-forn"></div>
     <div class="form-group"><label class="form-label">Produto</label><select class="form-input" id="oc-prod"></select></div>
-    <div class="form-group"><label class="form-label">Quantidade</label><input class="form-input" type="text" inputmode="decimal" id="oc-qtd" value="50" min="1"></div>
-    <div class="form-group"><label class="form-label">Valor total (R$)</label><input class="form-input" type="text" inputmode="decimal" id="oc-val" step="0.01" min="0"></div>
+    <div class="form-group"><label class="form-label">Quantidade</label><input class="form-input" type="text" inputmode="decimal" id="oc-qtd" value="50" min="1"ArrowUp'||event.key=='ArrowDown')event.preventDefault()"></div>
+    <div class="form-group"><label class="form-label">Valor total (R$)</label><input class="form-input" type="text" inputmode="decimal" id="oc-val" step="0.01" min="0"ArrowUp'||event.key=='ArrowDown')event.preventDefault()"></div>
     <div class="form-group"><label class="form-label">Status</label><select class="form-input" id="oc-status"><option>Aguardando</option><option>Em trânsito</option><option>Recebido</option></select></div>
     </div>
     <div class="modal-footer">
@@ -858,36 +858,15 @@ document.addEventListener('click', () => {
 </script>
 
 <script>
-// ── Fix definitivo: setas ← → movem cursor, ↑ ↓ não incrementam ──────────
-(function() {
-  function applyFix(inp) {
-    if (inp._arrowFixed) return;
-    inp._arrowFixed = true;
-    inp.addEventListener('keydown', function(e) {
-      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-      }
-    }, true);
-    inp.addEventListener('wheel', function(e) {
-      e.preventDefault();
-    }, { passive: false });
+// Bloquear seta up/down em qualquer input — captura na fase de captura do documento
+document.addEventListener('keydown', function(e) {
+  if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.target.tagName === 'INPUT') {
+    e.preventDefault();
   }
-
-  function fixAll() {
-    document.querySelectorAll('input').forEach(applyFix);
-  }
-
-  // Rodar quando o DOM estiver pronto
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fixAll);
-  } else {
-    fixAll();
-  }
-
-  // Rodar novamente quando novos inputs forem adicionados (itens de pedido)
-  new MutationObserver(fixAll).observe(document.documentElement, { childList: true, subtree: true });
-})();
+}, true);
+document.addEventListener('wheel', function(e) {
+  if (e.target.tagName === 'INPUT') e.preventDefault();
+}, { capture: true, passive: false });
 </script>
 
 <script type="module">
@@ -1090,7 +1069,7 @@ window.addItem = () => {
   row.className = 'pi-row'; row.id = 'pi-'+idx;
   const opts = D.produtos.map(p => '<option>' + p.nome + '</option>').join('');
   row.innerHTML = '<select class="form-input" onchange="setPI(' + idx + ',this.value)">' + opts + '</select>' +
-    '<input type="text" inputmode="decimal" class="form-input" style="max-width:70px;" value="1" min="1" onchange="pitens[' + idx + '].qty=+this.value">' +
+    '<input type="text" inputmode="decimal" class="form-input" style="max-width:70px;" value="1" onchange="pitens[' + idx + '].qty=+this.value">' +
     '<input type="text" inputmode="decimal" class="form-input" style="max-width:90px;" placeholder="Preço" id="pp-' + idx + '" onchange="pitens[' + idx + '].preco=+this.value">' +
     '<button class="btn-danger" onclick="document.getElementById(\'pi-' + idx + '\').remove();pitens[' + idx + ']=null">✕</button>';
   document.getElementById('ped-itens').appendChild(row);
@@ -1158,7 +1137,7 @@ window.editPedido = id => {
     row.className = 'pi-row'; row.id = 'pi-' + idx;
     row.innerHTML =
       '<select class="form-input" onchange="pitens[' + idx + '].produto=this.value">' + opts + '</select>' +
-      '<input type="text" inputmode="decimal" class="form-input" style="max-width:70px;" value="' + it.qty + '" min="1" ' +
+      '<input type="text" inputmode="decimal" class="form-input" style="max-width:70px;" value="' + it.qty + '" ' +
         'onchange="pitens[' + idx + '].qty=+this.value">' +
       '<input type="text" inputmode="decimal" class="form-input" style="max-width:90px;" id="pp-' + idx + '" value="' + it.preco + '" ' +
         'onchange="pitens[' + idx + '].preco=+this.value">' +
