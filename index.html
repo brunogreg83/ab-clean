@@ -48,6 +48,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .btn-ghost { background: none; border: 1px solid #ddd; border-radius: 8px; padding: 7px 12px; font-size: 13px; color: #555; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
 .btn-ghost:hover { background: #f5f5f3; }
 .btn-danger { background: none; border: 1px solid #f5c6c6; border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #A32D2D; cursor: pointer; }
+.btn-nf { background: none; border: 1px solid #b8d4f5; border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #185FA5; cursor: pointer; display:inline-flex;align-items:center;gap:4px; }
+.btn-nf:hover { background: #E6F1FB; }
+.btn-nf.emitida { border-color: #9FD4B8; color: #0F6E56; }
+.btn-nf.emitida:hover { background: #EAF3DE; }
 .btn-danger:hover { background: #FCEBEB; }
 .btn-view { background: none; border: 1px solid #d5e8d4; border-radius: 8px; padding: 4px 8px; font-size: 13px; color: #1D9E75; cursor: pointer; }
 .btn-view:hover { background: #EAF3DE; }
@@ -578,6 +582,79 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-fornecedor')">Cancelar</button>
       <button class="btn-primary" onclick="salvarFornecedor()">Salvar fornecedor</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Emissão NF -->
+<div class="modal-overlay" id="modal-emissao-nf">
+  <div class="modal" style="width:560px;">
+    <div class="modal-header"><span class="modal-header-title">Faturar / Emitir NF-e</span><span class="modal-drag-hint"><i class="ti ti-arrows-move"></i> mover</span></div>
+    <div class="modal-body">
+      <div style="background:#E6F1FB;border-radius:8px;padding:12px 14px;font-size:12px;color:#185FA5;margin-bottom:16px;line-height:1.6;">
+        <i class="ti ti-info-circle"></i> <b>Como funciona:</b> Copie os dados do pedido abaixo, acesse o portal da SEFAZ do seu estado e cole as informações para emitir a NF-e. Após emitir, registre o número da NF aqui para controle interno.
+      </div>
+      <div id="nf-dados-pedido" style="background:#f9f9f7;border-radius:8px;padding:14px;font-size:13px;line-height:1.8;margin-bottom:16px;"></div>
+
+      <div class="form-group">
+        <label class="form-label">Estado do emitente (selecione para abrir o portal correto)</label>
+        <select class="form-input" id="nf-estado">
+          <option value="">Selecione o estado...</option>
+          <option value="PR">Paraná (PR)</option>
+          <option value="SP">São Paulo (SP)</option>
+          <option value="MG">Minas Gerais (MG)</option>
+          <option value="SC">Santa Catarina (SC)</option>
+          <option value="RS">Rio Grande do Sul (RS)</option>
+          <option value="RJ">Rio de Janeiro (RJ)</option>
+          <option value="MS">Mato Grosso do Sul (MS)</option>
+          <option value="MT">Mato Grosso (MT)</option>
+          <option value="GO">Goiás (GO)</option>
+          <option value="DF">Distrito Federal (DF)</option>
+          <option value="BA">Bahia (BA)</option>
+          <option value="PE">Pernambuco (PE)</option>
+          <option value="CE">Ceará (CE)</option>
+          <option value="AM">Amazonas (AM)</option>
+          <option value="PA">Pará (PA)</option>
+          <option value="outros">Outros estados (Portal Nacional)</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="btn-primary" onclick="abrirPortalSEFAZ()"><i class="ti ti-external-link"></i> Abrir Portal SEFAZ</button>
+        <button class="btn-ghost" onclick="copiarDadosNF()"><i class="ti ti-copy"></i> Copiar dados</button>
+      </div>
+
+      <div style="border-top:1px solid #f0f0ec;padding-top:14px;">
+        <div class="section-title" style="margin-bottom:10px;">Registrar NF emitida</div>
+        <div style="display:flex;gap:8px;align-items:flex-end;">
+          <div class="form-group" style="flex:1;margin-bottom:0;">
+            <label class="form-label">Número da NF emitida</label>
+            <input class="form-input" id="nf-numero" placeholder="Ex: 000123">
+          </div>
+          <div class="form-group" style="flex:1;margin-bottom:0;">
+            <label class="form-label">Chave de acesso (44 dígitos)</label>
+            <input class="form-input" id="nf-chave" placeholder="Opcional">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-emissao-nf')">Fechar</button>
+      <button class="btn-primary" onclick="registrarNF()"><i class="ti ti-check"></i> Registrar NF no pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ver Dados NF -->
+<div class="modal-overlay" id="modal-ver-nf">
+  <div class="modal" style="width:480px;">
+    <div class="modal-header"><span class="modal-header-title">NF-e Registrada</span><span class="modal-drag-hint"><i class="ti ti-arrows-move"></i> mover</span></div>
+    <div class="modal-body">
+      <div id="ver-nf-corpo"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-ver-nf')">Fechar</button>
+      <button class="btn-ghost" onclick="cancelarNF()"><i class="ti ti-x"></i> Cancelar NF</button>
     </div>
   </div>
 </div>
@@ -1343,16 +1420,26 @@ window.atualizarPedido = async id => {
 function renderPedidos() {
   const rows = [...D.pedidos].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
   document.getElementById('tabela-pedidos').innerHTML = rows.length
-    ? rows.map(p => `<tr>
-        <td>#${p.id.slice(-6).toUpperCase()}</td>
-        <td>${fmtDt(p.data)}</td><td>${p.cliente}</td>
-        <td>${(p.itens||[]).length}</td><td>${R$(totPed(p))}</td>
-        <td>${badge(p.status)}</td>
-        <td><div class="td-actions">
-          <button class="btn-view" onclick="verPedido('${p.id}')" title="Ver pedido"><i class="ti ti-file-text"></i></button>
-          <button class="btn-edit" onclick="editPedido('${p.id}')">Editar</button>
-          <button class="btn-danger" onclick="delPedido('${p.id}')">Excluir</button>
-        </div></td></tr>`).join('')
+    ? rows.map(p => {
+        const nfBtn = p.nf_emitida
+          ? `<button class="btn-nf emitida" title="NF já emitida: ${p.nf_numero||'—'}" onclick="verDadosNF('${p.id}')">
+               <i class="ti ti-file-check"></i> NF ${p.nf_numero||'emitida'}
+             </button>`
+          : `<button class="btn-nf" onclick="abrirEmissaoNF('${p.id}')" title="Faturar / Emitir NF">
+               <i class="ti ti-receipt-2"></i> Faturar
+             </button>`;
+        return `<tr>
+          <td>#${p.id.slice(-6).toUpperCase()}</td>
+          <td>${fmtDt(p.data)}</td><td>${p.cliente}</td>
+          <td>${(p.itens||[]).length}</td><td>${R$(totPed(p))}</td>
+          <td>${badge(p.status)}</td>
+          <td><div class="td-actions">
+            ${nfBtn}
+            <button class="btn-view" onclick="verPedido('${p.id}')" title="Ver pedido"><i class="ti ti-file-text"></i></button>
+            <button class="btn-edit" onclick="editPedido('${p.id}')">Editar</button>
+            <button class="btn-danger" onclick="delPedido('${p.id}')">Excluir</button>
+          </div></td></tr>`;
+      }).join('')
     : '<tr><td colspan="7"><div class="empty-state">Nenhum pedido ainda. Crie o primeiro!</div></td></tr>';
 }
 window.exportCSV = () => {
@@ -2662,6 +2749,168 @@ window.verPedido = id => {
   const win = window.open('', '_blank', 'width=900,height=750,scrollbars=yes');
   win.document.write(html);
   win.document.close();
+};
+
+// ── Faturar / Emissão NF-e ─────────────────────────────────────────────────
+let _pedidoNFId = null;
+
+const PORTAIS_SEFAZ = {
+  PR: 'https://www.sefapr.pr.gov.br/nfce/emissao',
+  SP: 'https://www.nfp.fazenda.sp.gov.br/Login.aspx',
+  MG: 'https://nfe.fazenda.mg.gov.br/portalnfe',
+  SC: 'https://nfe.sef.sc.gov.br',
+  RS: 'https://www.sefaz.rs.gov.br/NFE/NFE-NFC.aspx',
+  RJ: 'https://www.fazenda.rj.gov.br/nfce',
+  MS: 'https://www.sefaz.ms.gov.br/nfe',
+  MT: 'https://www.sefaz.mt.gov.br/nfe',
+  GO: 'https://www.sefaz.go.gov.br/nfe',
+  DF: 'https://dec.fazenda.df.gov.br/nfe',
+  BA: 'https://nfe.sefaz.ba.gov.br',
+  PE: 'https://nfe.sefaz.pe.gov.br',
+  CE: 'https://nfe.sefaz.ce.gov.br',
+  AM: 'https://nfe.sefaz.am.gov.br',
+  PA: 'https://app.sefa.pa.gov.br/nfe',
+  outros: 'https://www.nfe.fazenda.gov.br/portal/principal.aspx',
+};
+
+window.abrirEmissaoNF = id => {
+  const p = D.pedidos.find(x => x.id === id);
+  if (!p) return;
+  _pedidoNFId = id;
+  const cli = D.clientes.find(c => c.nome === p.cliente) || {};
+  const tot = totPed(p);
+
+  // Montar dados do pedido formatados
+  const itensTexto = (p.itens||[]).map((it,i) =>
+    `  ${i+1}. ${it.produto} — Qtd: ${it.qty} | Unit: R$ ${Number(it.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})} | Total: R$ ${Number(it.qty*it.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
+  ).join('\n');
+
+  const dados = [
+    '═══════════════════════════════════════',
+    '  DADOS PARA EMISSÃO DE NF-e',
+    '═══════════════════════════════════════',
+    '',
+    '📋 EMITENTE',
+    '  Atuante Química PR',
+    '  Londrina – PR',
+    '  atuantevendas.pr@gmail.com',
+    '  (43) 98871-2001 – Andrea Lopes',
+    '',
+    '👤 DESTINATÁRIO (TOMADOR)',
+    '  Nome/Razão Social: ' + (cli.nome || p.cliente),
+    '  CNPJ/CPF:          ' + (cli.cnpj || '—'),
+    '  Endereço:          ' + (cli.endereco || '—'),
+    '  Cidade/UF:         ' + (cli.cidade || '—'),
+    '  Email:             ' + (cli.email || '—'),
+    '  Telefone:          ' + (cli.tel || '—'),
+    '',
+    '📦 PRODUTOS / SERVIÇOS',
+    itensTexto,
+    '',
+    '💰 VALORES',
+    '  Subtotal:             R$ ' + Number(tot).toLocaleString('pt-BR',{minimumFractionDigits:2}),
+    '  Forma de pagamento:   ' + (p.forma || '—'),
+    '  Condição:             ' + (p.pgto  || '—'),
+    '  TOTAL DA NF-e:        R$ ' + Number(tot).toLocaleString('pt-BR',{minimumFractionDigits:2}),
+    '',
+    '📅 Pedido #' + p.id.slice(-6).toUpperCase() + ' · Data: ' + fmtDt(p.data),
+    '═══════════════════════════════════════',
+  ].join('\n');
+
+  // Exibir no modal
+  document.getElementById('nf-dados-pedido').innerHTML =
+    '<pre style="font-size:11px;line-height:1.7;white-space:pre-wrap;font-family:monospace;color:#1a1a18;">' +
+    dados.replace(/</g,'&lt;') + '</pre>';
+
+  // Limpar campos de registro
+  document.getElementById('nf-numero').value = '';
+  document.getElementById('nf-chave').value  = '';
+  document.getElementById('nf-estado').value = 'PR'; // default PR
+
+  // Guardar dados para copiar
+  document.getElementById('modal-emissao-nf').dataset.dadosNF = dados;
+
+  document.getElementById('modal-emissao-nf').classList.add('open');
+};
+
+window.abrirPortalSEFAZ = () => {
+  const estado = document.getElementById('nf-estado').value;
+  if (!estado) { toast('Selecione o estado primeiro.'); return; }
+  const url = PORTAIS_SEFAZ[estado] || PORTAIS_SEFAZ['outros'];
+  window.open(url, '_blank');
+  toast('Portal SEFAZ ' + estado + ' aberto em nova aba!');
+};
+
+window.copiarDadosNF = () => {
+  const dados = document.getElementById('modal-emissao-nf').dataset.dadosNF || '';
+  navigator.clipboard.writeText(dados).then(() => {
+    toast('✅ Dados copiados para a área de transferência!');
+  }).catch(() => {
+    // Fallback para HTTP
+    const el = document.createElement('textarea');
+    el.value = dados;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    toast('✅ Dados copiados!');
+  });
+};
+
+window.registrarNF = async () => {
+  const numero = document.getElementById('nf-numero').value.trim();
+  if (!numero) { toast('Informe o número da NF emitida.'); return; }
+  if (!_pedidoNFId) return;
+
+  await upd('pedidos', _pedidoNFId, {
+    nf_emitida: true,
+    nf_numero:  numero,
+    nf_chave:   document.getElementById('nf-chave').value.trim(),
+    nf_data:    today(),
+    status:     'Entregue'
+  });
+
+  closeModal('modal-emissao-nf');
+  _pedidoNFId = null;
+  toast('✅ NF ' + numero + ' registrada no pedido!');
+};
+
+window.verDadosNF = id => {
+  const p = D.pedidos.find(x => x.id === id);
+  if (!p) return;
+  _pedidoNFId = id;
+
+  document.getElementById('ver-nf-corpo').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin-bottom:16px;">
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">NF-e Número</div>
+           <div style="font-size:18px;font-weight:700;color:#1D9E75;">${p.nf_numero||'—'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Data emissão</div>
+           <div style="font-size:14px;font-weight:500;">${fmtDt(p.nf_data)||'—'}</div></div>
+      <div style="grid-column:1/-1;"><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Chave de acesso</div>
+           <div style="font-size:11px;word-break:break-all;font-family:monospace;color:#555;">${p.nf_chave||'Não informada'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Pedido</div>
+           <div style="font-size:13px;">#${p.id.slice(-6).toUpperCase()}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Cliente</div>
+           <div style="font-size:13px;">${p.cliente}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Total</div>
+           <div style="font-size:13px;font-weight:600;">${R$(totPed(p))}</div></div>
+    </div>
+    <div style="background:#EAF3DE;border-radius:8px;padding:10px 14px;font-size:12px;color:#3B6D11;">
+      <i class="ti ti-check"></i> NF-e registrada com sucesso no pedido.
+    </div>`;
+
+  document.getElementById('modal-ver-nf').classList.add('open');
+};
+
+window.cancelarNF = async () => {
+  if (!_pedidoNFId) return;
+  if (!confirm('Cancelar o registro da NF neste pedido? (Isso não cancela a NF na SEFAZ — apenas remove o registro interno.)')) return;
+  await upd('pedidos', _pedidoNFId, {
+    nf_emitida: false, nf_numero: '', nf_chave: '', nf_data: ''
+  });
+  closeModal('modal-ver-nf');
+  _pedidoNFId = null;
+  toast('Registro da NF removido do pedido.');
 };
 
 // ── Importação de NF-e (XML / PDF) ─────────────────────────────────────────
