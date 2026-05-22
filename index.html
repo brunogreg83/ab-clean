@@ -551,6 +551,7 @@ tr:hover td { background: #fafaf8; }
         <option>Limpadores de Vidro</option>
         <option>Descalcificantes</option>
         <option>Bactericidas</option>
+        <option>Desinfetantes</option>
         <option>Aromatizantes</option>
         <option>Ceras e Polidores</option>
         <option>Produtos para Cozinha</option>
@@ -580,18 +581,16 @@ tr:hover td { background: #fafaf8; }
     <div class="form-group"><label class="form-label">Segmento</label>
       <select class="form-input" id="cl-seg">
         <option value="">Selecione...</option>
-        <option>Facilities</option>
         <option>Hospitalar</option>
         <option>Hotelaria</option>
         <option>Alimentício</option>
-        <option>Limpeza Urbana</option>
         <option>Escolar</option>
-        <option>Industrial</option>
         <option>Residencial</option>
         <option>Comercial</option>
         <option>Supermercados</option>
         <option>Farmacêutico</option>
         <option>Automotivo</option>
+        <option>Lavanderia</option>
         <option>Outros</option>
       </select>
     </div>
@@ -1063,31 +1062,48 @@ window.delPedido = async id => { if(!confirm('Excluir pedido?')) return; await d
 window.editPedido = id => {
   const p = D.pedidos.find(x => x.id === id);
   if (!p) return;
-  prepPedido();
-  // pre-fill
+
+  // limpar estado
+  pitens = [];
+  document.getElementById('ped-itens').innerHTML = '';
+
+  // preencher campos do cabeçalho
+  sel('ped-cli', D.clientes.map(c => c.nome));
   if (p.cliente) document.getElementById('ped-cli').value    = p.cliente;
   document.getElementById('ped-status').value = p.status || 'Aguardando';
   document.getElementById('ped-pgto').value   = p.pgto   || 'À vista';
   document.getElementById('ped-forma').value  = p.forma  || '';
-  pitens = [];
-  document.getElementById('ped-itens').innerHTML = '';
+  if (document.getElementById('ped-cond'))
+    document.getElementById('ped-cond').value = p.cond || '';
+
+  // popular itens preservando produto, qty e preço originais
   (p.itens || []).forEach(it => {
     const idx = pitens.length;
-    pitens.push({ ...it });
+    pitens.push({ produto: it.produto, qty: it.qty, preco: it.preco });
+
+    const opts = D.produtos.map(pr =>
+      '<option' + (pr.nome === it.produto ? ' selected' : '') + '>' + pr.nome + '</option>'
+    ).join('');
+
     const row = document.createElement('div');
-    row.className = 'pi-row'; row.id = 'pi-'+idx;
-    const opts2 = D.produtos.map(pr => '<option' + (pr.nome===it.produto?' selected':'') + '>' + pr.nome + '</option>').join('');
-    row.innerHTML = '<select class="form-input" onchange="setPI(' + idx + ',this.value)">' + opts2 + '</select>' +
-      '<input type="number" class="form-input" style="max-width:70px;" value="' + it.qty + '" min="1" onchange="pitens[' + idx + '].qty=+this.value">' +
-      '<input type="number" class="form-input" style="max-width:90px;" id="pp-' + idx + '" value="' + it.preco + '" onchange="pitens[' + idx + '].preco=+this.value">' +
+    row.className = 'pi-row'; row.id = 'pi-' + idx;
+    row.innerHTML =
+      '<select class="form-input" onchange="pitens[' + idx + '].produto=this.value">' + opts + '</select>' +
+      '<input type="number" class="form-input" style="max-width:70px;" value="' + it.qty + '" min="1" ' +
+        'onchange="pitens[' + idx + '].qty=+this.value">' +
+      '<input type="number" class="form-input" style="max-width:90px;" id="pp-' + idx + '" value="' + it.preco + '" ' +
+        'onchange="pitens[' + idx + '].preco=+this.value">' +
       '<button class="btn-danger" onclick="document.getElementById(\'pi-' + idx + '\').remove();pitens[' + idx + ']=null">✕</button>';
+
     document.getElementById('ped-itens').appendChild(row);
   });
-  // trocar salvar por atualizar
+
+  // trocar botão para salvar alterações
   const footer = document.querySelector('#modal-pedido .modal-footer');
-  footer.innerHTML = `
-    <button class="btn-ghost" onclick="closeModal('modal-pedido')">Cancelar</button>
-    <button class="btn-primary" onclick="atualizarPedido('${id}')">Salvar alterações</button>`;
+  footer.innerHTML =
+    '<button class="btn-ghost" onclick="closeModal(\'modal-pedido\')">Cancelar</button>' +
+    '<button class="btn-primary" onclick="atualizarPedido(\'' + id + '\')">Salvar alterações</button>';
+
   openModal('modal-pedido');
 };
 window.atualizarPedido = async id => {
