@@ -1850,17 +1850,39 @@ window.editOC = id => {
 window.atualizarOC = async id => {
   const itens = window.ocItens.filter(Boolean).filter(i => i.produto);
   if (!itens.length) { toast('Adicione ao menos um produto!'); return; }
-  const total = itens.reduce((s,i) => s + i.qty * i.custo, 0);
+  const total      = itens.reduce((s,i) => s + i.qty * i.custo, 0);
+  const novoStatus = document.getElementById('oc-status').value;
+  const ocAntiga   = D.ordens.find(x => x.id === id);
+  const statusAnt  = ocAntiga?.status || 'Aguardando';
+  const fornNome   = document.getElementById('oc-forn').value;
+
   await upd('ordens', id, {
-    fornecedor: document.getElementById('oc-forn').value,
-    status:     document.getElementById('oc-status').value,
+    fornecedor: fornNome,
+    status:     novoStatus,
     obs:        document.getElementById('oc-obs').value,
     itens, total
   });
+
   document.querySelector('#modal-oc .modal-footer').innerHTML =
     '<button class="btn-ghost" onclick="closeModal(\'modal-oc\')">Cancelar</button>' +
     '<button class="btn-primary" onclick="salvarOC()">Salvar OC</button>';
-  closeModal('modal-oc'); toast('✅ OC atualizada!');
+  closeModal('modal-oc');
+
+  // Enviar email ao fornecedor quando status sai de Aguardando
+  if (statusAnt === 'Aguardando' && novoStatus !== 'Aguardando') {
+    const forn = D.fornecedores.find(f => f.nome === fornNome);
+    if (forn?.email) {
+      setTimeout(() => {
+        const oc = D.ordens.find(x => x.id === id);
+        if (oc) enviarOCPorEmail(oc, forn);
+      }, 1000);
+      toast('✅ OC atualizada! Enviando email ao fornecedor...');
+    } else {
+      toast('✅ OC atualizada! (Fornecedor sem email cadastrado)');
+    }
+  } else {
+    toast('✅ OC atualizada!');
+  }
 };
 
 window.abrirOCProd = nome => {
@@ -1883,6 +1905,63 @@ window.abrirOCProd = nome => {
   autoPrecoOC(0, nome);
   document.getElementById('modal-oc').classList.add('open');
 };
+
+// ── Envio automático de OC por email ──────────────────────────────────────
+function enviarOCPorEmail(o, forn) {
+  if (!forn?.email) return;
+  // Carregar EmailJS e enviar
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+  s.onload = () => {
+    emailjs.init('kAwPjAH_jv7lOCqeT');
+    const cod  = 'OC-' + o.id.slice(-6).toUpperCase();
+    const itens = (o.itens || []);
+    const total = o.total || 0;
+    const itensRows = itens.map((it,i) =>
+      '<tr><td>' + (i+1) + '</td><td>' + it.produto + '</td>' +
+      '<td style="text-align:center;">' + it.qty + '</td>' +
+      '<td style="text-align:right;">R$ ' + Number(it.custo).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td>' +
+      '<td style="text-align:right;">R$ ' + Number(it.qty*it.custo).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td></tr>'
+    ).join('');
+
+    const htmlOC =
+      '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
+      'body{font-family:Arial,sans-serif;color:#1a1a18;padding:32px;font-size:13px;}' +
+      'h1{color:#0a1628;font-size:18px;margin-bottom:4px;}' +
+      '.sub{color:#888;font-size:12px;margin-bottom:24px;}' +
+      'table{width:100%;border-collapse:collapse;margin-top:16px;}' +
+      'th{background:#f5f5f3;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;color:#888;}' +
+      'td{padding:10px 12px;border-bottom:1px solid #f0f0ec;font-size:13px;}' +
+      '.total{text-align:right;font-size:15px;font-weight:700;color:#0a1628;margin-top:16px;}' +
+      '.footer{margin-top:32px;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:12px;}' +
+      '</style></head><body>' +
+      '<h1>Ordem de Compra ' + cod + '</h1>' +
+      '<div class="sub">Atuante Química — Londrina/PR — atuantequimicapr@gmail.com</div>' +
+      '<p>Prezado(a) <b>' + (forn.contato || forn.nome) + '</b>,</p>' +
+      '<p style="margin-top:8px;">Segue abaixo nossa Ordem de Compra <b>' + cod + '</b> de ' + fmtDt(o.data) + ':</p>' +
+      '<table><thead><tr><th>#</th><th>Produto</th><th>Qtd.</th><th style="text-align:right;">Custo unit.</th><th style="text-align:right;">Total</th></tr></thead>' +
+      '<tbody>' + itensRows + '</tbody></table>' +
+      '<div class="total">Total: R$ ' + Number(total).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</div>' +
+      (o.obs ? '<p style="margin-top:16px;background:#f9f9f7;padding:12px;border-radius:6px;"><b>Observações:</b> ' + o.obs + '</p>' : '') +
+      '<p style="margin-top:24px;">Aguardamos confirmação do recebimento desta OC.</p>' +
+      '<p style="margin-top:8px;">Atenciosamente,<br><b>Atuante Química</b><br>atuantequimicapr@gmail.com — Londrina/PR</p>' +
+      '<div class="footer">Este email foi gerado automaticamente pelo sistema ERP Atuante Química.</div>' +
+      '</body></html>';
+
+    emailjs.send('service_2efwo64', 'template_jfha3la', {
+      pedido_cod:   cod,
+      cliente_nome: forn.nome,
+      para_email:   forn.email,
+      html_pedido:  htmlOC
+    }).then(() => {
+      toast('✅ OC enviada para ' + forn.email);
+    }).catch(err => {
+      console.error('EmailJS OC:', err);
+      toast('⚠️ OC salva, mas falha no email: ' + (err.text || err.message || ''));
+    });
+  };
+  document.head.appendChild(s);
+}
 
 // ── Template OC ────────────────────────────────────────────────────────────
 window.verOC = id => {
@@ -1938,6 +2017,7 @@ window.verOC = id => {
 
 '<div class="no-print">' +
 '<button onclick="window.print()" style="background:#0a1628;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;">\uD83D\uDDB8 Imprimir / Salvar PDF</button>' +
+'<button id="btn-email-oc" onclick="enviarEmailOC()" style="background:#185FA5;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;">\u2709\uFE0F Enviar para fornecedor</button>' +
 '<button onclick="window.close()" style="background:none;border:1px solid #ddd;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;">Fechar</button>' +
 '</div>' +
 
@@ -1979,6 +2059,38 @@ window.verOC = id => {
 '<div class="footer">' +
 '<span>Atuante Qu\u00edmica \u2013 Londrina/PR \u00B7 Gerado em ' + new Date().toLocaleString('pt-BR') + '</span>' +
 '<span>' + cod + '</span></div>' +
+
+'<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"><\/script>' +
+'<script>' +
+'emailjs.init("kAwPjAH_jv7lOCqeT");' +
+'var _emailForn = "' + (forn.email || '').replace(/"/g,'\\"') + '";' +
+'var _codOC = "' + cod + '";' +
+'var _nomeForn = "' + o.fornecedor.replace(/"/g,'\\"') + '";' +
+'function enviarEmailOC() {' +
+'  if (!_emailForn) { alert("Fornecedor não possui email cadastrado."); return; }' +
+'  var btn = document.getElementById("btn-email-oc");' +
+'  btn.textContent = "\u23F3 Enviando..."; btn.disabled = true;' +
+'  var noprint = document.querySelector(".no-print");' +
+'  noprint.style.display = "none";' +
+'  var htmlOC = document.documentElement.outerHTML;' +
+'  noprint.style.display = "flex";' +
+'  emailjs.send("service_2efwo64","template_jfha3la",{' +
+'    pedido_cod: _codOC,' +
+'    cliente_nome: _nomeForn,' +
+'    para_email: _emailForn,' +
+'    html_pedido: htmlOC' +
+'  }).then(function(){' +
+'    btn.textContent = "\u2705 Enviado para " + _emailForn;' +
+'    btn.style.background = "#1D9E75";' +
+'    setTimeout(function(){ btn.textContent = "\u2709\uFE0F Enviar para fornecedor"; btn.style.background = "#185FA5"; btn.disabled=false; },3000);' +
+'  }).catch(function(err){' +
+'    btn.textContent = "\u274C Erro ao enviar";' +
+'    btn.style.background = "#D85A30"; btn.disabled=false;' +
+'    console.error(err);' +
+'    setTimeout(function(){ btn.textContent = "\u2709\uFE0F Enviar para fornecedor"; btn.style.background="#185FA5"; },3000);' +
+'  });' +
+'}' +
+'<\/script>' +
 '</body></html>';
 
   const win = window.open('', '_blank', 'width=900,height=750,scrollbars=yes');
