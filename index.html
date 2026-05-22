@@ -858,11 +858,10 @@ document.addEventListener('click', () => {
 </script>
 
 <script>
-// Bloquear seta up/down em qualquer input — captura na fase de captura do documento
 document.addEventListener('keydown', function(e) {
-  if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.target.tagName === 'INPUT') {
-    e.preventDefault();
-  }
+  if (!e.target || e.target.tagName !== 'INPUT') return;
+  const bloqueadas = ['ArrowUp','ArrowDown','PageUp','PageDown','Home','End'];
+  if (bloqueadas.includes(e.key)) e.preventDefault();
 }, true);
 document.addEventListener('wheel', function(e) {
   if (e.target.tagName === 'INPUT') e.preventDefault();
