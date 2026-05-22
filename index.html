@@ -376,8 +376,9 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 
       <!-- ESTOQUE -->
       <div class="screen" id="screen-estoque">
-        <div style="display:flex;gap:8px;margin-bottom:18px;">
+        <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
           <button class="btn-primary" onclick="openModal('modal-produto')"><i class="ti ti-plus"></i> Novo produto</button>
+          <button class="btn-ghost" onclick="openModal('modal-importar-nf')"><i class="ti ti-file-import"></i> Importar XML / NF-e</button>
           <input class="form-input" placeholder="Buscar produto..." style="max-width:220px;height:36px;" oninput="filtrar('tabela-estoque',this.value)">
         </div>
         <div class="two-col">
@@ -577,6 +578,39 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-fornecedor')">Cancelar</button>
       <button class="btn-primary" onclick="salvarFornecedor()">Salvar fornecedor</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Importar NF -->
+<div class="modal-overlay" id="modal-importar-nf">
+  <div class="modal" style="width:560px;">
+    <div class="modal-header"><span class="modal-header-title">Importar XML / NF-e</span><span class="modal-drag-hint"><i class="ti ti-arrows-move"></i> mover</span></div>
+    <div class="modal-body">
+      <div style="background:#E6F1FB;border-radius:8px;padding:12px 14px;font-size:12px;color:#185FA5;margin-bottom:16px;">
+        <i class="ti ti-info-circle"></i> Faça upload de um <b>XML de NF-e</b> ou <b>PDF de nota fiscal</b>. O sistema identifica automaticamente os produtos e quantidades usando IA.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Selecione o arquivo</label>
+        <input type="file" id="nf-file" accept=".xml,.pdf" class="form-input" style="padding:6px;" onchange="previewNF(this)">
+      </div>
+      <div id="nf-preview" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Ação ao importar</label>
+          <select class="form-input" id="nf-acao">
+            <option value="entrada">Dar entrada no estoque (somar quantidades)</option>
+            <option value="cadastrar">Cadastrar produtos novos (sem alterar estoque)</option>
+            <option value="ambos">Cadastrar novos + dar entrada nos existentes</option>
+          </select>
+        </div>
+        <div id="nf-status" style="font-size:13px;color:#888;margin-bottom:12px;min-height:20px;"></div>
+        <div id="nf-itens-preview" style="max-height:280px;overflow-y:auto;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-importar-nf')">Cancelar</button>
+      <button class="btn-ghost" id="btn-analisar-nf" onclick="analisarNF()" style="display:none;"><i class="ti ti-cpu"></i> Analisar com IA</button>
+      <button class="btn-primary" id="btn-confirmar-nf" onclick="confirmarImportacao()" style="display:none;">Confirmar importação</button>
     </div>
   </div>
 </div>
@@ -2628,6 +2662,175 @@ window.verPedido = id => {
   const win = window.open('', '_blank', 'width=900,height=750,scrollbars=yes');
   win.document.write(html);
   win.document.close();
+};
+
+// ── Importação de NF-e (XML / PDF) com IA ──────────────────────────────────
+let nfItensAnalisados = [];
+
+window.previewNF = (input) => {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('nf-preview').style.display = 'block';
+  document.getElementById('btn-analisar-nf').style.display = 'inline-flex';
+  document.getElementById('btn-confirmar-nf').style.display = 'none';
+  document.getElementById('nf-itens-preview').innerHTML = '';
+  document.getElementById('nf-status').textContent = 'Arquivo selecionado: ' + file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
+  nfItensAnalisados = [];
+};
+
+window.analisarNF = async () => {
+  const file = document.getElementById('nf-file').files[0];
+  if (!file) { toast('Selecione um arquivo primeiro.'); return; }
+
+  const btn = document.getElementById('btn-analisar-nf');
+  btn.innerHTML = '<i class="ti ti-loader"></i> Analisando...';
+  btn.disabled = true;
+  document.getElementById('nf-status').textContent = '⏳ Enviando para análise com IA...';
+  document.getElementById('nf-itens-preview').innerHTML = '';
+
+  try {
+    const ext = file.name.split('.').pop().toLowerCase();
+    let content, messages;
+
+    if (ext === 'xml') {
+      // Ler XML como texto
+      const texto = await file.text();
+      messages = [{
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Analise este XML de nota fiscal eletrônica (NF-e) e extraia TODOS os itens/produtos. Para cada item retorne um JSON com os campos: codigo (cProd ou similar), nome (xProd), quantidade (qCom - quantidade comercial), unidade (uCom), preco_unitario (vUnCom - valor unitário), total_item (vProd). Responda APENAS com um JSON válido no formato: {"fornecedor":"nome do emitente","data":"data de emissão","numero_nf":"número da NF","itens":[{"codigo":"","nome":"","quantidade":0,"unidade":"","preco_unitario":0,"total_item":0}]}. Sem texto antes ou depois do JSON.\n\nXML:\n' + texto.substring(0, 50000) }
+        ]
+      }];
+    } else {
+      // PDF — converter para base64
+      const base64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(',')[1]);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      messages = [{
+        role: 'user',
+        content: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+          { type: 'text', text: 'Analise esta nota fiscal em PDF e extraia TODOS os itens/produtos. Para cada item retorne um JSON com os campos: codigo, nome, quantidade, unidade, preco_unitario, total_item. Também extraia: fornecedor (nome do emitente/vendedor), data, numero_nf. Responda APENAS com um JSON válido no formato: {"fornecedor":"","data":"","numero_nf":"","itens":[{"codigo":"","nome":"","quantidade":0,"unidade":"","preco_unitario":0,"total_item":0}]}. Sem texto antes ou depois.' }
+        ]
+      }];
+    }
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages
+      })
+    });
+
+    const data = await resp.json();
+    const text = (data.content || []).map(c => c.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    nfItensAnalisados = parsed.itens || [];
+
+    // Verificar quais existem no cadastro
+    nfItensAnalisados = nfItensAnalisados.map(it => {
+      const match = D.produtos.find(p =>
+        p.nome.toLowerCase().includes(it.nome.toLowerCase().substring(0,8)) ||
+        p.cod === it.codigo
+      );
+      return { ...it, produtoId: match?.id || null, produtoExiste: !!match, produtoNome: match?.nome || it.nome };
+    });
+
+    // Montar preview
+    const nf = parsed;
+    let html = `<div style="background:#f9f9f7;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;">
+      <b>Fornecedor:</b> ${nf.fornecedor||'—'} &nbsp;|&nbsp;
+      <b>NF:</b> ${nf.numero_nf||'—'} &nbsp;|&nbsp;
+      <b>Data:</b> ${nf.data||'—'}
+    </div>`;
+    html += '<div class="table-wrap" style="margin:0;"><table><thead><tr><th>Produto (NF)</th><th>Qtd</th><th>Un</th><th>Valor unit.</th><th>Situação</th></tr></thead><tbody>';
+    nfItensAnalisados.forEach((it, i) => {
+      const cor = it.produtoExiste ? '#3B6D11' : '#854F0B';
+      const bg  = it.produtoExiste ? '#EAF3DE' : '#FAEEDA';
+      const status = it.produtoExiste
+        ? '✅ ' + it.produtoNome
+        : '🆕 Novo produto';
+      html += `<tr>
+        <td style="font-size:12px;">${it.nome}</td>
+        <td style="text-align:center;">${it.quantidade}</td>
+        <td style="text-align:center;">${it.unidade||'un'}</td>
+        <td style="text-align:right;">R$ ${Number(it.preco_unitario||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td><span style="font-size:11px;padding:2px 8px;border-radius:12px;background:${bg};color:${cor};">${status}</span></td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+    html += `<div style="margin-top:10px;font-size:12px;color:#888;">${nfItensAnalisados.length} item(ns) encontrado(s). ✅ = existe no cadastro, 🆕 = será cadastrado.</div>`;
+
+    document.getElementById('nf-itens-preview').innerHTML = html;
+    document.getElementById('nf-status').innerHTML = '<span style="color:#1D9E75;font-weight:500;">✅ Análise concluída! Revise os itens e confirme a importação.</span>';
+    document.getElementById('btn-confirmar-nf').style.display = 'inline-flex';
+
+  } catch(err) {
+    console.error('NF IA erro:', err);
+    document.getElementById('nf-status').innerHTML = '<span style="color:#D85A30;">❌ Erro ao analisar: ' + (err.message||'verifique o arquivo') + '</span>';
+  } finally {
+    btn.innerHTML = '<i class="ti ti-cpu"></i> Analisar com IA';
+    btn.disabled = false;
+  }
+};
+
+window.confirmarImportacao = async () => {
+  if (!nfItensAnalisados.length) { toast('Nenhum item para importar.'); return; }
+  const acao = document.getElementById('nf-acao').value;
+  const btn  = document.getElementById('btn-confirmar-nf');
+  btn.textContent = 'Importando...'; btn.disabled = true;
+
+  let cadastrados = 0, atualizados = 0, ignorados = 0;
+
+  for (const it of nfItensAnalisados) {
+    const qty = Number(it.quantidade) || 0;
+    const prod = D.produtos.find(p =>
+      p.nome.toLowerCase().includes(it.nome.toLowerCase().substring(0,8)) ||
+      p.cod === it.codigo
+    );
+
+    if (prod) {
+      // Produto existe
+      if (acao === 'entrada' || acao === 'ambos') {
+        await upd('produtos', prod.id, { estoque: prod.estoque + qty });
+        atualizados++;
+      } else {
+        ignorados++;
+      }
+    } else {
+      // Produto novo
+      if (acao === 'cadastrar' || acao === 'ambos') {
+        await add('produtos', {
+          cod:       it.codigo || 'NF-' + Date.now().toString().slice(-4),
+          nome:      it.nome,
+          categoria: 'Outros',
+          estoque:   acao === 'ambos' ? qty : 0,
+          minimo:    10,
+          preco:     0,
+          custo:     Number(it.preco_unitario) || 0,
+          obs:       'Importado via NF-e'
+        });
+        cadastrados++;
+      } else {
+        ignorados++;
+      }
+    }
+  }
+
+  closeModal('modal-importar-nf');
+  document.getElementById('nf-file').value = '';
+  document.getElementById('nf-preview').style.display = 'none';
+  nfItensAnalisados = [];
+  btn.textContent = 'Confirmar importação'; btn.disabled = false;
+  toast(`✅ Importação concluída: ${cadastrados} cadastrado(s), ${atualizados} atualizado(s), ${ignorados} ignorado(s).`);
 };
 
 // ── Usuários ───────────────────────────────────────────────────────────────
