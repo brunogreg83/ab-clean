@@ -719,6 +719,9 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
       <div class="section-title" style="margin-top:8px;">Itens do pedido</div>
       <div id="ped-itens"></div>
       <button class="btn-ghost" style="width:100%;margin-top:4px;" onclick="addItem()"><i class="ti ti-plus"></i> Adicionar item</button>
+      <div class="form-group" style="margin-top:14px;"><label class="form-label">Observações</label>
+        <textarea class="form-input" id="ped-obs" rows="3" placeholder="Observações sobre o pedido, entrega, condições especiais..." style="resize:vertical;"></textarea>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-pedido')">Cancelar</button>
@@ -1335,6 +1338,8 @@ window.salvarPedido = async () => {
     status:  document.getElementById('ped-status').value,
     pgto:    document.getElementById('ped-pgto').value,
     forma:   document.getElementById('ped-forma').value,
+    cond:    document.getElementById('ped-cond')?.value  || '',
+    obs:     document.getElementById('ped-obs')?.value   || '',
     itens
   });
   closeModal('modal-pedido');
@@ -1369,6 +1374,8 @@ window.editPedido = id => {
   document.getElementById('ped-forma').value  = p.forma  || '';
   if (document.getElementById('ped-cond'))
     document.getElementById('ped-cond').value = p.cond || '';
+  if (document.getElementById('ped-obs'))
+    document.getElementById('ped-obs').value  = p.obs  || '';
 
   // popular itens preservando produto, qty e preço originais
   (p.itens || []).forEach(it => {
@@ -1414,6 +1421,8 @@ window.atualizarPedido = async id => {
     status:  novoStatus,
     pgto:    document.getElementById('ped-pgto').value,
     forma:   document.getElementById('ped-forma').value,
+    cond:    document.getElementById('ped-cond')?.value || '',
+    obs:     document.getElementById('ped-obs')?.value  || '',
     itens
   });
 
@@ -2688,7 +2697,9 @@ function buildPedidoHtml(p, cli, cod, tot, itensRows) {
 '    <div class="field"><div class="fl">Condição de pagamento</div><div class="fv">' + (p.pgto  || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Forma de pagamento</div><div class="fv">' + (p.forma || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Status do pedido</div><div class="fv">' + p.status + '</div></div>\n' +
+(p.cond ? '    <div class="field" style="grid-column:1/-1;"><div class="fl">Detalhes da condição</div><div class="fv">' + p.cond + '</div></div>\n' : '') +
 '  </div>\n' +
+(p.obs ? '  <div style="margin-top:12px;background:#f9f9f7;border-radius:8px;padding:10px 14px;"><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Observações</div><div style="font-size:13px;">' + p.obs + '</div></div>\n' : '') +
 '</div>\n' +
 
 '<div class="section">\n' +
@@ -2753,7 +2764,14 @@ function buildPedidoHtml(p, cli, cod, tot, itensRows) {
 window.verPedido = id => {
   const p = D.pedidos.find(x => x.id === id);
   if (!p) { toast('Pedido não encontrado.'); return; }
-  const cli  = D.clientes.find(c => c.nome === p.cliente) || {};
+
+  // Busca robusta: nome exato, depois case-insensitive, depois parcial
+  const nomePed = (p.cliente || '').trim().toLowerCase();
+  const cli = D.clientes.find(c => c.nome === p.cliente)
+           || D.clientes.find(c => c.nome.trim().toLowerCase() === nomePed)
+           || D.clientes.find(c => c.nome.trim().toLowerCase().includes(nomePed) || nomePed.includes(c.nome.trim().toLowerCase()))
+           || {};
+
   const cod  = '#' + p.id.slice(-6).toUpperCase();
   const tot  = totPed(p);
   const itensRows = (p.itens||[]).map((it,i) =>
@@ -2798,7 +2816,11 @@ window.abrirEmissaoNF = id => {
   const p = D.pedidos.find(x => x.id === id);
   if (!p) return;
   _pedidoNFId = id;
-  const cli = D.clientes.find(c => c.nome === p.cliente) || {};
+  const nomePedNF = (p.cliente || '').trim().toLowerCase();
+  const cli = D.clientes.find(c => c.nome === p.cliente)
+           || D.clientes.find(c => c.nome.trim().toLowerCase() === nomePedNF)
+           || D.clientes.find(c => c.nome.trim().toLowerCase().includes(nomePedNF) || nomePedNF.includes(c.nome.trim().toLowerCase()))
+           || {};
   const tot = totPed(p);
 
   // Montar dados do pedido formatados
