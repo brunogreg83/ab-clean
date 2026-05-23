@@ -1560,17 +1560,19 @@ window.atualizarProduto = async id => {
     obs:       document.getElementById('pr-obs').value,
   };
 
+  console.log('[atualizarProduto] id:', id, '| dados:', dados);
+
   try {
-    await upd('produtos', id, dados);
-    // fechar sem passar pelo closeModal para não limpar antes da hora
+    await updateDoc(doc(db, 'produtos', id), dados);
+    console.log('[atualizarProduto] Firebase OK');
     document.getElementById('modal-produto').classList.remove('open');
-    // restaurar footer
     document.querySelector('#modal-produto .modal-footer').innerHTML =
       '<button class="btn-ghost" onclick="closeModal(\'modal-produto\')">Cancelar</button>' +
       '<button class="btn-primary" onclick="salvarProduto()">Salvar</button>';
     toast('✅ Produto atualizado!');
   } catch(e) {
-    toast('❌ Erro ao atualizar: ' + e.message);
+    console.error('[atualizarProduto] Erro:', e);
+    toast('❌ Erro: ' + e.message);
   }
 };
 
