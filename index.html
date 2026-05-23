@@ -1221,7 +1221,7 @@ window.openModal = id => {
 };
 window.closeModal = id => {
   document.getElementById(id).classList.remove('open');
-  // ao fechar modal de pedido, restaurar botão para "Salvar pedido"
+  // restaurar botão original ao fechar
   if (id === 'modal-pedido') {
     const footer = document.querySelector('#modal-pedido .modal-footer');
     if (footer && !footer.querySelector('[onclick="salvarPedido()"]')) {
@@ -1229,6 +1229,21 @@ window.closeModal = id => {
         '<button class="btn-ghost" onclick="closeModal(\'modal-pedido\')">Cancelar</button>' +
         '<button class="btn-primary" onclick="salvarPedido()">Salvar pedido</button>';
     }
+  }
+  if (id === 'modal-produto') {
+    const footer = document.querySelector('#modal-produto .modal-footer');
+    if (footer) {
+      footer.innerHTML =
+        '<button class="btn-ghost" onclick="closeModal(\'modal-produto\')">Cancelar</button>' +
+        '<button class="btn-primary" onclick="salvarProduto()">Salvar</button>';
+    }
+    // Limpar campos ao fechar
+    ['pr-nome','pr-cod','pr-obs'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = '';
+    });
+    ['pr-est','pr-min','pr-preco','pr-custo'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = '0';
+    });
   }
 };
 // Modais fecham apenas via botão Cancelar/Salvar
@@ -1503,19 +1518,39 @@ window.delProduto = async id => { if(!confirm('Excluir produto?')) return; await
 window.editProduto = id => {
   const p = D.produtos.find(x => x.id === id);
   if (!p) return;
-  document.getElementById('pr-nome').value  = p.nome;
-  document.getElementById('pr-cod').value   = p.cod;
-  document.getElementById('pr-cat').value   = p.categoria;
-  document.getElementById('pr-est').value   = p.estoque;
-  document.getElementById('pr-min').value   = p.minimo;
-  document.getElementById('pr-preco').value = p.preco;
-  document.getElementById('pr-custo').value = p.custo;
-  document.getElementById('pr-obs').value   = p.obs || '';
-  const footer = document.querySelector('#modal-produto .modal-footer');
-  footer.innerHTML = `
-    <button class="btn-ghost" onclick="closeModal('modal-produto')">Cancelar</button>
-    <button class="btn-primary" onclick="atualizarProduto('${id}')">Salvar alterações</button>`;
-  document.getElementById('modal-produto').classList.add('open');
+
+  // Garantir que o modal está fechado antes de preencher
+  document.getElementById('modal-produto').classList.remove('open');
+
+  // Pequeno delay para garantir que o DOM está pronto
+  setTimeout(() => {
+    document.getElementById('pr-nome').value  = p.nome       || '';
+    document.getElementById('pr-cod').value   = p.cod        || '';
+
+    // select de categoria — definir opção correta
+    const catEl = document.getElementById('pr-cat');
+    catEl.value = p.categoria || '';
+    // se a categoria não existir nas opções, selecionar "Outros"
+    if (!catEl.value && p.categoria) {
+      const opt = document.createElement('option');
+      opt.value = p.categoria; opt.textContent = p.categoria;
+      catEl.appendChild(opt);
+      catEl.value = p.categoria;
+    }
+
+    document.getElementById('pr-est').value   = p.estoque !== undefined ? String(p.estoque)  : '0';
+    document.getElementById('pr-min').value   = p.minimo  !== undefined ? String(p.minimo)   : '10';
+    document.getElementById('pr-preco').value = p.preco   !== undefined ? String(p.preco)    : '0';
+    document.getElementById('pr-custo').value = p.custo   !== undefined ? String(p.custo)    : '0';
+    document.getElementById('pr-obs').value   = p.obs     || '';
+
+    const footer = document.querySelector('#modal-produto .modal-footer');
+    footer.innerHTML =
+      '<button class="btn-ghost" onclick="closeModal(\'modal-produto\')">Cancelar</button>' +
+      '<button class="btn-primary" onclick="atualizarProduto(\'' + id + '\')">Salvar alterações</button>';
+
+    document.getElementById('modal-produto').classList.add('open');
+  }, 30);
 };
 window.atualizarProduto = async id => {
   await upd('produtos', id, {
