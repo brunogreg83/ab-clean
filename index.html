@@ -1237,13 +1237,6 @@ window.closeModal = id => {
         '<button class="btn-ghost" onclick="closeModal(\'modal-produto\')">Cancelar</button>' +
         '<button class="btn-primary" onclick="salvarProduto()">Salvar</button>';
     }
-    // Limpar campos ao fechar
-    ['pr-nome','pr-cod','pr-obs'].forEach(id => {
-      const el = document.getElementById(id); if(el) el.value = '';
-    });
-    ['pr-est','pr-min','pr-preco','pr-custo'].forEach(id => {
-      const el = document.getElementById(id); if(el) el.value = '0';
-    });
   }
 };
 // Modais fecham apenas via botão Cancelar/Salvar
@@ -1553,20 +1546,32 @@ window.editProduto = id => {
   }, 30);
 };
 window.atualizarProduto = async id => {
-  await upd('produtos', id, {
-    nome:      document.getElementById('pr-nome').value,
-    cod:       document.getElementById('pr-cod').value,
+  const nome = document.getElementById('pr-nome').value.trim();
+  if (!nome) { toast('Informe o nome do produto.'); return; }
+
+  const dados = {
+    nome,
+    cod:       document.getElementById('pr-cod').value.trim(),
     categoria: document.getElementById('pr-cat').value,
-    estoque:   +document.getElementById('pr-est').value,
-    minimo:    +document.getElementById('pr-min').value,
-    preco:     +document.getElementById('pr-preco').value,
-    custo:     +document.getElementById('pr-custo').value,
+    estoque:   parseFloat(document.getElementById('pr-est').value)   || 0,
+    minimo:    parseFloat(document.getElementById('pr-min').value)   || 0,
+    preco:     parseFloat(document.getElementById('pr-preco').value) || 0,
+    custo:     parseFloat(document.getElementById('pr-custo').value) || 0,
     obs:       document.getElementById('pr-obs').value,
-  });
-  document.querySelector('#modal-produto .modal-footer').innerHTML = `
-    <button class="btn-ghost" onclick="closeModal('modal-produto')">Cancelar</button>
-    <button class="btn-primary" onclick="salvarProduto()">Salvar</button>`;
-  closeModal('modal-produto'); toast('✅ Produto atualizado!');
+  };
+
+  try {
+    await upd('produtos', id, dados);
+    // fechar sem passar pelo closeModal para não limpar antes da hora
+    document.getElementById('modal-produto').classList.remove('open');
+    // restaurar footer
+    document.querySelector('#modal-produto .modal-footer').innerHTML =
+      '<button class="btn-ghost" onclick="closeModal(\'modal-produto\')">Cancelar</button>' +
+      '<button class="btn-primary" onclick="salvarProduto()">Salvar</button>';
+    toast('✅ Produto atualizado!');
+  } catch(e) {
+    toast('❌ Erro ao atualizar: ' + e.message);
+  }
 };
 
 function renderEstoque() {
