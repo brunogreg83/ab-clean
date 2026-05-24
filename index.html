@@ -1109,6 +1109,7 @@ document.addEventListener('wheel', function(e) {
 }, { capture: true, passive: false });
 
 window.ocItens = []; // estado global dos itens da OC
+window.pitens  = []; // estado global dos itens do pedido
 </script>
 
 <script type="module">
@@ -1130,6 +1131,9 @@ const db  = getFirestore(app);
 
 // ── Cache local ────────────────────────────────────────────────────────────
 const D = { pedidos:[], produtos:[], clientes:[], receber:[], pagar:[], ordens:[], usuarios:[], fornecedores:[] };
+
+// window.pitens precisa ser global pois é referenciado em onchange de HTML dinâmico
+window.pitens = [];
 
 // ── Sync indicator ─────────────────────────────────────────────────────────
 const dot  = document.getElementById('sync-dot');
@@ -1315,32 +1319,32 @@ window.closeModal = id => {
 })();
 
 // ── Pedidos ────────────────────────────────────────────────────────────────
-let pitens = [];
+// window.pitens declarado globalmente como window.pitens
 function prepPedido() {
-  pitens = [];
+  window.pitens = [];
   document.getElementById('ped-itens').innerHTML = '';
   sel('ped-cli', D.clientes.map(c => c.nome));
 }
 window.addItem = () => {
-  const idx = pitens.length;
-  pitens.push({ produto:'', qty:1, preco:0 });
+  const idx = window.pitens.length;
+  window.pitens.push({ produto:'', qty:1, preco:0 });
   const row = document.createElement('div');
   row.className = 'pi-row'; row.id = 'pi-'+idx;
   const opts = D.produtos.map(p => '<option>' + p.nome + '</option>').join('');
   row.innerHTML = '<select class="form-input" onchange="setPI(' + idx + ',this.value)">' + opts + '</select>' +
-    '<input type="text" inputmode="decimal" class="form-input" style="max-width:70px;" value="1" onchange="pitens[' + idx + '].qty=+this.value">' +
-    '<input type="text" inputmode="decimal" class="form-input" style="max-width:90px;" placeholder="Preço" id="pp-' + idx + '" onchange="pitens[' + idx + '].preco=+this.value">' +
-    '<button class="btn-danger" onclick="document.getElementById(\'pi-' + idx + '\').remove();pitens[' + idx + ']=null">✕</button>';
+    '<input type="text" inputmode="decimal" class="form-input" style="max-width:70px;" value="1" onchange="window.pitens[' + idx + '].qty=+this.value">' +
+    '<input type="text" inputmode="decimal" class="form-input" style="max-width:90px;" placeholder="Preço" id="pp-' + idx + '" onchange="window.pitens[' + idx + '].preco=+this.value">' +
+    '<button class="btn-danger" onclick="document.getElementById(\'pi-' + idx + '\').remove();window.pitens[' + idx + ']=null">✕</button>';
   document.getElementById('ped-itens').appendChild(row);
   if (D.produtos[0]) setPI(idx, D.produtos[0].nome);
 };
 window.setPI = (idx, nome) => {
   const p = D.produtos.find(x => x.nome === nome);
-  pitens[idx] = { produto:nome, qty:pitens[idx]?.qty||1, preco:p?.preco||0 };
+  window.pitens[idx] = { produto:nome, qty:window.pitens[idx]?.qty||1, preco:p?.preco||0 };
   const el = document.getElementById('pp-'+idx); if(el && p) el.value = p.preco;
 };
 window.salvarPedido = async () => {
-  const itens = pitens.filter(Boolean).filter(i => i.produto);
+  const itens = window.pitens.filter(Boolean).filter(i => i.produto);
   if (!itens.length) { toast('Adicione ao menos um item!'); return; }
   const docRef = await add('pedidos', {
     data:   today(),
@@ -1373,7 +1377,7 @@ window.editPedido = id => {
   if (!p) return;
 
   // limpar estado
-  pitens = [];
+  window.pitens = [];
   document.getElementById('ped-itens').innerHTML = '';
 
   // preencher campos do cabeçalho
@@ -1389,8 +1393,8 @@ window.editPedido = id => {
 
   // popular itens preservando produto, qty e preço originais
   (p.itens || []).forEach(it => {
-    const idx = pitens.length;
-    pitens.push({ produto: it.produto, qty: it.qty, preco: it.preco });
+    const idx = window.pitens.length;
+    window.pitens.push({ produto: it.produto, qty: it.qty, preco: it.preco });
 
     const opts = D.produtos.map(pr =>
       '<option' + (pr.nome === it.produto ? ' selected' : '') + '>' + pr.nome + '</option>'
@@ -1399,12 +1403,12 @@ window.editPedido = id => {
     const row = document.createElement('div');
     row.className = 'pi-row'; row.id = 'pi-' + idx;
     row.innerHTML =
-      '<select class="form-input" onchange="pitens[' + idx + '].produto=this.value">' + opts + '</select>' +
+      '<select class="form-input" onchange="window.pitens[' + idx + '].produto=this.value">' + opts + '</select>' +
       '<input type="text" inputmode="decimal" class="form-input" style="max-width:70px;" value="' + it.qty + '" ' +
-        'onchange="pitens[' + idx + '].qty=+this.value">' +
+        'onchange="window.pitens[' + idx + '].qty=+this.value">' +
       '<input type="text" inputmode="decimal" class="form-input" style="max-width:90px;" id="pp-' + idx + '" value="' + it.preco + '" ' +
-        'onchange="pitens[' + idx + '].preco=+this.value">' +
-      '<button class="btn-danger" onclick="document.getElementById(\'pi-' + idx + '\').remove();pitens[' + idx + ']=null">✕</button>';
+        'onchange="window.pitens[' + idx + '].preco=+this.value">' +
+      '<button class="btn-danger" onclick="document.getElementById(\'pi-' + idx + '\').remove();window.pitens[' + idx + ']=null">✕</button>';
 
     document.getElementById('ped-itens').appendChild(row);
   });
@@ -1419,7 +1423,7 @@ window.editPedido = id => {
   document.getElementById('modal-pedido').classList.add('open');
 };
 window.atualizarPedido = async id => {
-  const itens = pitens.filter(Boolean).filter(i => i.produto);
+  const itens = window.pitens.filter(Boolean).filter(i => i.produto);
   if (!itens.length) { toast('Adicione ao menos um item!'); return; }
 
   const novoStatus = document.getElementById('ped-status').value;
