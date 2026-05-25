@@ -1799,6 +1799,21 @@ window.atualizarReceber = async id => {
 };
 
 window.delPagar = async id => { await del('pagar', id); };
+
+window.salvarPagar = async () => {
+  const fornecedor = document.getElementById('pag-forn').value.trim();
+  const valor      = parseFloat(document.getElementById('pag-val').value) || 0;
+  const vencimento = document.getElementById('pag-venc').value;
+  const desc       = document.getElementById('pag-desc').value;
+  if (!fornecedor) { toast('Informe o fornecedor.'); return; }
+  if (!valor)      { toast('Informe o valor.'); return; }
+  await add('pagar', { fornecedor, valor, vencimento, desc });
+  document.getElementById('pag-forn').value = '';
+  document.getElementById('pag-val').value  = '';
+  document.getElementById('pag-desc').value = '';
+  closeModal('modal-pagar');
+  toast('✅ Conta a pagar lançada!');
+};
 window.editPagar = id => {
   const p = D.pagar.find(x => x.id === id);
   if (!p) return;
