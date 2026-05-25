@@ -829,16 +829,19 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
   <div class="modal">
     <div class="modal-header"><span class="modal-header-title">Lançar conta a pagar</span><span class="modal-drag-hint"><i class="ti ti-arrows-move"></i> mover</span></div>
     <div class="modal-body">
-      <div class="form-group"><label class="form-label">Fornecedor</label><input class="form-input" id="pag-forn"></div>
-    <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="text" inputmode="decimal" id="pag-val" step="0.01" min="0"></div>
-    <div class="form-group"><label class="form-label">Vencimento</label><input class="form-input" type="date" id="pag-venc"></div>
-    <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="pag-desc"></div>
+      <div class="form-group"><label class="form-label">Fornecedor</label>
+        <input class="form-input" id="pag-forn" placeholder="Digite ou selecione..." list="pag-forn-list" autocomplete="off">
+        <datalist id="pag-forn-list"></datalist>
+      </div>
+      <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="text" inputmode="decimal" id="pag-val"></div>
+      <div class="form-group"><label class="form-label">Vencimento</label><input class="form-input" type="date" id="pag-venc"></div>
+      <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="pag-desc"></div>
     </div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-pagar')">Cancelar</button>
       <button class="btn-primary" onclick="salvarPagar()">Salvar</button>
-      </div>
-</div>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modal-oc">
@@ -1211,6 +1214,14 @@ window.filtrar = (id, q) => {
 window.openModal = id => {
   if (id === 'modal-pedido')  prepPedido();
   if (id === 'modal-receber') { document.getElementById('rec-venc').value = today(); sel('rec-cli', D.clientes.map(c=>c.nome)); }
+  if (id === 'modal-pagar') {
+    document.getElementById('pag-venc').value = today();
+    const dl = document.getElementById('pag-forn-list');
+    if (dl) dl.innerHTML = D.fornecedores
+      .filter(f => f.status === 'Ativo')
+      .map(f => '<option value="' + f.nome + '">' + f.nome + (f.cnpj ? ' — ' + f.cnpj : '') + '</option>')
+      .join('');
+  }
   if (id === 'modal-oc') {
     window.ocItens = [];
     document.getElementById('oc-itens').innerHTML = '';
