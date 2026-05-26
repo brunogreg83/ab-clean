@@ -1022,8 +1022,8 @@ window.mobGoTo = function(id) {
 
   // redesenhar gráficos ao navegar
   if (id === 'financeiro') {
-    const tR = D.receber.reduce((s,r)=>s+r.valor,0);
-    const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
+    const tR = D.receber.reduce((s,r)=>s+(parseFloat(r.valor)||0),0);
+    const tP = D.pagar.reduce((s,p)=>s+(parseFloat(p.valor)||0),0);
     setTimeout(() => {
       const rxd = calcRxDMesAtual(); desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', rxd.tR, rxd.tP);
       const sel = document.getElementById('fin-mes-saldo');
@@ -1032,8 +1032,8 @@ window.mobGoTo = function(id) {
     }, 30);
   }
   if (id === 'dashboard') {
-    const tR = D.receber.reduce((s,r)=>s+r.valor,0);
-    const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
+    const tR = D.receber.reduce((s,r)=>s+(parseFloat(r.valor)||0),0);
+    const tP = D.pagar.reduce((s,p)=>s+(parseFloat(p.valor)||0),0);
     setTimeout(() => { const rxd = calcRxDMesAtual(); desenharRxD('rxd-chart','rxd-legenda','dash-saldo-badge', rxd.tR, rxd.tP); }, 30);
     setTimeout(desenharGrafico, 60);
   }
@@ -2004,8 +2004,8 @@ window.atualizarPagar = async id => {
 };
 
 function renderFinanceiro() {
-  const tR = D.receber.reduce((s,r) => s+r.valor, 0);
-  const tP = D.pagar.reduce((s,p) => s+p.valor,   0);
+  const tR = D.receber.reduce((s,r) => s+(parseFloat(r.valor)||0), 0);
+  const tP = D.pagar.reduce((s,p) => s+(parseFloat(p.valor)||0),   0);
 
   // popular seletor de meses do Saldo Projetado
   const sel = document.getElementById('fin-mes-saldo');
@@ -2081,7 +2081,7 @@ window.filtrarReceberMes = () => {
   if (titulo) titulo.textContent = 'Contas a receber — ' + meses[mes-1] + '/' + ano;
 
   const filtradas = D.receber.filter(r => r.vencimento && r.vencimento.startsWith(ym));
-  const total = filtradas.reduce((s,r) => s+r.valor, 0);
+  const total = filtradas.reduce((s,r) => s + (parseFloat(r.valor) || 0), 0);
 
   document.getElementById('tabela-receber').innerHTML = filtradas.map(r => `<tr>
     <td>${r.cliente}</td><td>${fmtDt(r.vencimento)}</td><td>${R$(r.valor)}</td>
@@ -2110,7 +2110,7 @@ window.filtrarPagarMes = () => {
   if (titulo) titulo.textContent = 'Contas a pagar — ' + meses[mes-1] + '/' + ano;
 
   const filtradas = D.pagar.filter(p => p.vencimento && p.vencimento.startsWith(ym));
-  const total = filtradas.reduce((s,p) => s+p.valor, 0);
+  const total = filtradas.reduce((s,p) => s+(parseFloat(p.valor)||0), 0);
 
   document.getElementById('tabela-pagar').innerHTML = filtradas.map(p => `<tr>
     <td>${p.fornecedor}${p.recorrente ? ' <span title="Recorrente · ' + (p.parcela||'') + '/' + (p.total_parcelas||'') + '" style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:10px;margin-left:4px;">🔄 ' + (p.parcela||'') + '/' + (p.total_parcelas||'?') + '</span>' : ''}</td>
@@ -2145,8 +2145,8 @@ window.atualizarSaldoMes = () => {
   // Filtrar receitas e despesas do mês selecionado
   const recMes = D.receber.filter(r => r.vencimento && r.vencimento.startsWith(ym));
   const pagMes = D.pagar.filter(p => p.vencimento && p.vencimento.startsWith(ym));
-  const tRecMes = recMes.reduce((s,r) => s+r.valor, 0);
-  const tPagMes = pagMes.reduce((s,p) => s+p.valor, 0);
+  const tRecMes = recMes.reduce((s,r) => s+(parseFloat(r.valor)||0), 0);
+  const tPagMes = pagMes.reduce((s,p) => s+(parseFloat(p.valor)||0), 0);
   const saldoMes = tRecMes - tPagMes;
 
   // Listar lançamentos do mês
@@ -2685,9 +2685,9 @@ function renderCompras() {
 function calcRxDMesAtual() {
   const ymAtual = new Date().toISOString().slice(0,7); // "2026-05"
   const tR = D.receber.filter(r => r.vencimento && r.vencimento.startsWith(ymAtual))
-                      .reduce((s,r) => s+r.valor, 0);
+                      .reduce((s,r) => s+(parseFloat(r.valor)||0), 0);
   const tP = D.pagar.filter(p => p.vencimento && p.vencimento.startsWith(ymAtual))
-                    .reduce((s,p) => s+p.valor, 0);
+                    .reduce((s,p) => s+(parseFloat(p.valor)||0), 0);
   return { tR, tP };
 }
 
@@ -2958,7 +2958,7 @@ window.relatorio = tipo => {
     showRel('Margem por produto',`<div class="table-wrap"><table><thead><tr><th>Produto</th><th>Custo</th><th>Preço</th><th>Margem</th></tr></thead><tbody>${l||'<tr><td colspan="4"><div class="empty-state">Sem produtos.</div></td></tr>'}</tbody></table></div>`);
   }
   if (tipo==='fluxo') {
-    const tR=D.receber.reduce((s,r)=>s+r.valor,0), tP=D.pagar.reduce((s,p)=>s+p.valor,0);
+    const tR=D.receber.reduce((s,r)=>s+(parseFloat(r.valor)||0),0), tP=D.pagar.reduce((s,p)=>s+(parseFloat(p.valor)||0),0);
     showRel('Fluxo de caixa',`<div class="stat-row"><span class="stat-key">Total a receber</span><span class="stat-val" style="color:#1D9E75">${R$(tR)}</span></div><div class="stat-row"><span class="stat-key">Total a pagar</span><span class="stat-val" style="color:#D85A30">${R$(tP)}</span></div><div class="stat-row"><span class="stat-key">Saldo projetado</span><span class="stat-val" style="font-size:16px;color:${tR-tP>=0?'#1D9E75':'#D85A30'}">${R$(tR-tP)}</span></div>`);
   }
   if (tipo==='giro') {
@@ -2967,7 +2967,7 @@ window.relatorio = tipo => {
   }
   if (tipo==='inadimplencia') {
     const v=D.receber.filter(r=>daysTo(r.vencimento)<0);
-    const tot=v.reduce((s,r)=>s+r.valor,0);
+    const tot=v.reduce((s,r)=>s+(parseFloat(r.valor)||0),0);
     const l=v.map(r=>`<tr><td>${r.cliente}</td><td>${fmtDt(r.vencimento)}</td><td>${R$(r.valor)}</td><td>${Math.abs(daysTo(r.vencimento))} dias</td></tr>`).join('');
     showRel('Inadimplência', v.length
       ? `<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Vencimento</th><th>Valor</th><th>Atraso</th></tr></thead><tbody>${l}</tbody></table></div><div class="stat-row"><span class="stat-key">Total em atraso</span><span class="stat-val" style="color:#D85A30">${R$(tot)}</span></div>`
@@ -3699,8 +3699,8 @@ window.goTo = (id, btn) => {
   sessionStorage.setItem('abc_tela', id);
   // redesenhar gráficos que dependem de visibilidade
   if (id === 'financeiro') {
-    const tR = D.receber.reduce((s,r)=>s+r.valor,0);
-    const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
+    const tR = D.receber.reduce((s,r)=>s+(parseFloat(r.valor)||0),0);
+    const tP = D.pagar.reduce((s,p)=>s+(parseFloat(p.valor)||0),0);
     setTimeout(() => {
       const rxd = calcRxDMesAtual(); desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', rxd.tR, rxd.tP);
       const sel = document.getElementById('fin-mes-saldo');
@@ -3709,8 +3709,8 @@ window.goTo = (id, btn) => {
     }, 30);
   }
   if (id === 'dashboard') {
-    const tR = D.receber.reduce((s,r)=>s+r.valor,0);
-    const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
+    const tR = D.receber.reduce((s,r)=>s+(parseFloat(r.valor)||0),0);
+    const tP = D.pagar.reduce((s,p)=>s+(parseFloat(p.valor)||0),0);
     setTimeout(() => { const rxd = calcRxDMesAtual(); desenharRxD('rxd-chart','rxd-legenda','dash-saldo-badge', rxd.tR, rxd.tP); }, 30);
     setTimeout(desenharGrafico, 60);
   }
