@@ -2768,14 +2768,16 @@ function desenharRxD(containerId, legendaId, badgeId, receitas, despesas) {
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
 function renderDashboard() {
-  const fat  = D.pedidos.filter(p=>p.status==='Entregue').reduce((s,p)=>s+totPed(p),0);
+  const ymAtualDash = new Date().toISOString().slice(0,7);
+  const fat  = D.pedidos.filter(p => p.status==='Entregue' && (p.data||'').startsWith(ymAtualDash)).reduce((s,p)=>s+totPed(p),0);
+  const mesDash = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][new Date().getMonth()];
   const ab   = D.pedidos.filter(p=>p.status!=='Entregue').length;
   const ag   = D.pedidos.filter(p=>p.status==='Aguardando').length;
   const al   = D.produtos.filter(p=>sit(p.estoque,p.minimo)!=='OK');
   const ativos = D.clientes.filter(c=>c.status==='Ativo').length;
 
   document.getElementById('dash-kpis').innerHTML = `
-    <div class="kpi-card"><div class="kpi-label">Faturamento (entregues)</div><div class="kpi-value">${R$(fat)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Faturamento (${mesDash})</div><div class="kpi-value">${R$(fat)}</div></div>
     <div class="kpi-card"><div class="kpi-label">Pedidos abertos</div><div class="kpi-value">${ab}</div><div class="kpi-delta">${ag} aguardam separação</div></div>
     <div class="kpi-card"><div class="kpi-label">Clientes ativos</div><div class="kpi-value">${ativos}</div></div>
     <div class="kpi-card"><div class="kpi-label">Itens em alerta</div><div class="kpi-value">${al.length}</div><div class="kpi-delta">Estoque mínimo atingido</div></div>`;
