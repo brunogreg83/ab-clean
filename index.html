@@ -1188,6 +1188,48 @@ document.addEventListener('wheel', function(e) {
 
 window.ocItens = []; // estado global dos itens da OC
 window.pitens  = []; // estado global dos itens do pedido
+
+// ── Máscaras de CNPJ e Telefone ───────────────────────────────────────────
+function maskCNPJ(v) {
+  v = v.replace(/\D/g,'').slice(0,14);
+  if (v.length <= 2)  return v;
+  if (v.length <= 5)  return v.slice(0,2)+'.'+v.slice(2);
+  if (v.length <= 8)  return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);
+  if (v.length <= 12) return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'/'+v.slice(8);
+  return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'/'+v.slice(8,12)+'-'+v.slice(12);
+}
+function maskTel(v) {
+  v = v.replace(/\D/g,'').slice(0,11);
+  if (v.length <= 2)  return '('+v;
+  if (v.length <= 6)  return '('+v.slice(0,2)+') '+v.slice(2);
+  if (v.length <= 10) return '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6);
+  return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
+}
+function maskCEP(v) {
+  v = v.replace(/\D/g,'').slice(0,8);
+  if (v.length <= 5) return v;
+  return v.slice(0,5)+'-'+v.slice(5);
+}
+function applyMask(el, fn) {
+  if (!el) return;
+  el.addEventListener('input', function() {
+    const pos = this.selectionStart;
+    const old = this.value;
+    this.value = fn(this.value);
+    // reposicionar cursor
+    const diff = this.value.length - old.length;
+    try { this.setSelectionRange(pos + diff, pos + diff); } catch(e){}
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  // Clientes
+  applyMask(document.getElementById('cl-cnpj'), maskCNPJ);
+  applyMask(document.getElementById('cl-tel'),  maskTel);
+  applyMask(document.getElementById('cl-cep'),  maskCEP);
+  // Fornecedores
+  applyMask(document.getElementById('forn-cnpj'), maskCNPJ);
+  applyMask(document.getElementById('forn-tel'),  maskTel);
+});
 </script>
 
 <script type="module">
@@ -1257,7 +1299,7 @@ async function upd(col, id, data) {
 
 // ── Utils ──────────────────────────────────────────────────────────────────
 const getSessao = () => { try { return JSON.parse(sessionStorage.getItem('abc_auth')); } catch(e){ return null; } };
-const R$     = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:0,maximumFractionDigits:0});
+const R$     = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtDt  = s => { if(!s) return '—'; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; };
 const today  = () => new Date().toISOString().split('T')[0];
 const daysTo = s => Math.round((new Date(s) - new Date(today())) / 86400000);
@@ -1719,14 +1761,14 @@ window.editCliente = id => {
   const c = D.clientes.find(x => x.id === id);
   if (!c) return;
   document.getElementById('cl-nome').value     = c.nome     || '';
-  document.getElementById('cl-cnpj').value     = c.cnpj     || '';
+  document.getElementById('cl-cnpj').value     = maskCNPJ(c.cnpj     || '');
   document.getElementById('cl-ie').value       = c.ie       || '';
   document.getElementById('cl-seg').value      = c.segmento || '';
   document.getElementById('cl-email').value    = c.email    || '';
-  document.getElementById('cl-tel').value      = c.tel      || '';
+  document.getElementById('cl-tel').value      = maskTel(c.tel      || '');
   document.getElementById('cl-endereco').value = c.endereco || '';
   document.getElementById('cl-cidade').value   = c.cidade   || '';
-  document.getElementById('cl-cep').value      = c.cep      || '';
+  document.getElementById('cl-cep').value      = maskCEP(c.cep      || '');
   document.getElementById('cl-obs').value      = c.obs      || '';
   document.getElementById('cl-status').value   = c.status   || 'Ativo';
   const footer = document.querySelector('#modal-cliente .modal-footer');
@@ -2212,9 +2254,9 @@ window.editFornecedor = id => {
   const f = D.fornecedores.find(x => x.id === id);
   if (!f) return;
   document.getElementById('forn-nome').value     = f.nome     || '';
-  document.getElementById('forn-cnpj').value     = f.cnpj     || '';
+  document.getElementById('forn-cnpj').value     = maskCNPJ(f.cnpj     || '');
   document.getElementById('forn-contato').value  = f.contato  || '';
-  document.getElementById('forn-tel').value      = f.tel      || '';
+  document.getElementById('forn-tel').value      = maskTel(f.tel      || '');
   document.getElementById('forn-email').value    = f.email    || '';
   document.getElementById('forn-endereco').value = f.endereco || '';
   document.getElementById('forn-cidade').value   = f.cidade   || '';
