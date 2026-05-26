@@ -2555,33 +2555,28 @@ function desenharRxD(containerId, legendaId, badgeId, receitas, despesas) {
 
   const fmtV = v => v >= 1000 ? 'R$ ' + (v/1000).toFixed(1) + 'k' : 'R$ ' + v;
 
+  // ID único para os gradientes — evita conflito entre dashboard e financeiro
+  const uid = containerId.replace(/[^a-z]/gi,'');
+
   const svg =
   `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:${H}px;display:block;">
-    <!-- linha base -->
-    <line x1="${PAD.l}" y1="${PAD.top + chartH}" x2="${W - PAD.r}" y2="${PAD.top + chartH}" stroke="#f0f0ec" stroke-width="1"/>
-
-    <!-- barra receitas -->
     <defs>
-      <linearGradient id="gradR" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="gR_${uid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#1D9E75"/>
         <stop offset="100%" stop-color="#9FE1CB"/>
       </linearGradient>
-      <linearGradient id="gradD" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="gD_${uid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#D85A30"/>
         <stop offset="100%" stop-color="#F5C6A0"/>
       </linearGradient>
     </defs>
-
-    <rect x="${xR}" y="${yR}" width="${barW}" height="${hR}" rx="6" ry="6" fill="url(#gradR)"/>
+    <line x1="${PAD.l}" y1="${PAD.top + chartH}" x2="${W - PAD.r}" y2="${PAD.top + chartH}" stroke="#f0f0ec" stroke-width="1"/>
+    <rect x="${xR}" y="${yR}" width="${barW}" height="${hR}" rx="6" ry="6" fill="url(#gR_${uid})"/>
     <text x="${xR + barW/2}" y="${yR - 6}" text-anchor="middle" font-size="11" font-weight="600" fill="#0F6E56">${fmtV(receitas)}</text>
     <text x="${xR + barW/2}" y="${PAD.top + chartH + 16}" text-anchor="middle" font-size="11" fill="#888">Receitas</text>
-
-    <!-- barra despesas -->
-    <rect x="${xD}" y="${yD}" width="${barW}" height="${hD}" rx="6" ry="6" fill="url(#gradD)"/>
+    <rect x="${xD}" y="${yD}" width="${barW}" height="${hD}" rx="6" ry="6" fill="url(#gD_${uid})"/>
     <text x="${xD + barW/2}" y="${yD - 6}" text-anchor="middle" font-size="11" font-weight="600" fill="#A32D2D">${fmtV(despesas)}</text>
     <text x="${xD + barW/2}" y="${PAD.top + chartH + 16}" text-anchor="middle" font-size="11" fill="#888">Despesas</text>
-
-    <!-- linha de saldo -->
     <line x1="${xR}" y1="${PAD.top + chartH - Math.round(Math.min(receitas,despesas)/mx*chartH)}"
           x2="${xD + barW}" y2="${PAD.top + chartH - Math.round(Math.min(receitas,despesas)/mx*chartH)}"
           stroke="${saldo >= 0 ? '#1D9E75' : '#D85A30'}" stroke-width="1.5" stroke-dasharray="4 3"/>
