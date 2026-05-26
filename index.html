@@ -2256,7 +2256,7 @@ window.verFornecedor = id => {
   if (!f) return;
   const ini = f.nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
   const ocs = D.ordens.filter(o => o.fornecedor === f.nome);
-  const totOC = ocs.reduce((s,o) => s+o.total, 0);
+  const totOC = ocs.reduce((s,o) => s+(parseFloat(o.total)||0), 0);
   document.getElementById('cli-popup-body').innerHTML = `
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
       <div style="width:52px;height:52px;border-radius:50%;background:#E6F1FB;color:#185FA5;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;">${ini}</div>
@@ -2340,7 +2340,7 @@ window.salvarOC = async () => {
   const fornecedor = document.getElementById('oc-forn').value;
   const status     = document.getElementById('oc-status').value;
   const obs        = document.getElementById('oc-obs').value;
-  const total      = itens.reduce((s,i) => s + i.qty * i.custo, 0);
+  const total      = itens.reduce((s,i) => s + (parseFloat(i.qty)||0) * (parseFloat(i.custo)||0), 0);
 
   const docRef = await add('ordens', { fornecedor, itens, status, obs, total, data: today() });
 
@@ -2399,7 +2399,7 @@ window.editOC = id => {
 window.atualizarOC = async id => {
   const itens = window.ocItens.filter(Boolean).filter(i => i.produto);
   if (!itens.length) { toast('Adicione ao menos um produto!'); return; }
-  const total      = itens.reduce((s,i) => s + i.qty * i.custo, 0);
+  const total      = itens.reduce((s,i) => s + (parseFloat(i.qty)||0) * (parseFloat(i.custo)||0), 0);
   const novoStatus = document.getElementById('oc-status').value;
   const ocAntiga   = D.ordens.find(x => x.id === id);
   const statusAnt  = ocAntiga?.status || 'Aguardando';
@@ -2470,7 +2470,7 @@ function enviarOCPorEmail(o, forn) {
       '<tr><td>' + (i+1) + '</td><td>' + it.produto + '</td>' +
       '<td style="text-align:center;">' + it.qty + '</td>' +
       '<td style="text-align:right;">R$ ' + Number(it.custo).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td>' +
-      '<td style="text-align:right;">R$ ' + Number(it.qty*it.custo).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td></tr>'
+      '<td style="text-align:right;">R$ ' + Number((parseFloat(it.qty)||0)*(parseFloat(it.custo)||0)).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td></tr>'
     ).join('');
 
     const htmlOC =
@@ -2490,7 +2490,7 @@ function enviarOCPorEmail(o, forn) {
       '<p style="margin-top:8px;">Segue abaixo nossa Ordem de Compra <b>' + cod + '</b> de ' + fmtDt(o.data) + ':</p>' +
       '<table><thead><tr><th>#</th><th>Produto</th><th>Qtd.</th><th style="text-align:right;">Custo unit.</th><th style="text-align:right;">Total</th></tr></thead>' +
       '<tbody>' + itensRows + '</tbody></table>' +
-      '<div class="total">Total: R$ ' + Number(total).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</div>' +
+      '<div class="total">Total: R$ ' + Number(parseFloat(total)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</div>' +
       (o.obs ? '<p style="margin-top:16px;background:#f9f9f7;padding:12px;border-radius:6px;"><b>Observações:</b> ' + o.obs + '</p>' : '') +
       '<p style="margin-top:24px;">Aguardamos confirmação do recebimento desta OC.</p>' +
       '<p style="margin-top:8px;">Atenciosamente,<br><b>Atuante Química PR</b><br>atuantevendas.pr@gmail.com — Andrea Lopes · (43) 98871-2001 — Londrina/PR</p>' +
@@ -2523,7 +2523,7 @@ window.verOC = id => {
   const itens = (o.itens && o.itens.length)
     ? o.itens
     : o.produto ? [{ produto: o.produto, qty: o.qty || 1, custo: o.total || 0 }] : [];
-  const total = o.total || itens.reduce((s,i)=>s+i.qty*i.custo,0);
+  const total = o.total || itens.reduce((s,i)=>s+(parseFloat(i.qty)||0)*(parseFloat(i.custo)||0),0);
 
   const itensRows = itens.map((it,i) =>
     '<tr>' +
@@ -2531,7 +2531,7 @@ window.verOC = id => {
     '<td>' + it.produto + '</td>' +
     '<td style="text-align:center;">' + it.qty + '</td>' +
     '<td style="text-align:right;">R$ ' + Number(it.custo).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td>' +
-    '<td style="text-align:right;">R$ ' + Number(it.qty*it.custo).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td>' +
+    '<td style="text-align:right;">R$ ' + Number((parseFloat(it.qty)||0)*(parseFloat(it.custo)||0)).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td>' +
     '</tr>'
   ).join('');
 
@@ -2598,8 +2598,8 @@ window.verOC = id => {
 '<tbody>' + itensRows + '</tbody></table></div>' +
 
 '<div class="totals"><div class="totals-box">' +
-'<div class="total-row"><span>Subtotal</span><span>R$ ' + Number(total).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</span></div>' +
-'<div class="total-row final"><span>Total da OC</span><span>R$ ' + Number(total).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</span></div>' +
+'<div class="total-row"><span>Subtotal</span><span>R$ ' + Number(parseFloat(total)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</span></div>' +
+'<div class="total-row final"><span>Total da OC</span><span>R$ ' + Number(parseFloat(total)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</span></div>' +
 '</div></div>' +
 
 (o.obs ? '<div style="margin-top:20px;background:#f9f9f7;border-radius:8px;padding:12px 16px;"><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Observações</div><div style="font-size:13px;">' + o.obs + '</div></div>' : '') +
@@ -2668,7 +2668,7 @@ function renderCompras() {
         <td>${o.fornecedor}</td>
         <td>${fmtDt(o.data)}</td>
         <td>${nItens} item(ns)</td>
-        <td>${R$(o.total||0)}</td>
+        <td>${R$(parseFloat(o.total)||0)}</td>
         <td>${badge(o.status)}</td>
         <td><div class="td-actions">
           <button class="btn-view" onclick="verOC('${o.id}')" title="Ver template"><i class="ti ti-file-text"></i></button>
@@ -2962,7 +2962,7 @@ window.relatorio = tipo => {
     showRel('Fluxo de caixa',`<div class="stat-row"><span class="stat-key">Total a receber</span><span class="stat-val" style="color:#1D9E75">${R$(tR)}</span></div><div class="stat-row"><span class="stat-key">Total a pagar</span><span class="stat-val" style="color:#D85A30">${R$(tP)}</span></div><div class="stat-row"><span class="stat-key">Saldo projetado</span><span class="stat-val" style="font-size:16px;color:${tR-tP>=0?'#1D9E75':'#D85A30'}">${R$(tR-tP)}</span></div>`);
   }
   if (tipo==='giro') {
-    const l=D.produtos.map(p=>{const v=D.pedidos.flatMap(pe=>pe.itens||[]).filter(i=>i.produto===p.nome).reduce((s,i)=>s+i.qty,0);return `<tr><td>${p.nome}</td><td>${p.estoque}</td><td>${v}</td><td>${p.estoque>0?(v/p.estoque).toFixed(1):'—'}</td></tr>`;}).join('');
+    const l=D.produtos.map(p=>{const v=D.pedidos.flatMap(pe=>pe.itens||[]).filter(i=>i.produto===p.nome).reduce((s,i)=>s+(parseFloat(i.qty)||0),0);return `<tr><td>${p.nome}</td><td>${p.estoque}</td><td>${v}</td><td>${p.estoque>0?(v/p.estoque).toFixed(1):'—'}</td></tr>`;}).join('');
     showRel('Giro de estoque',`<div class="table-wrap"><table><thead><tr><th>Produto</th><th>Estoque</th><th>Vendido</th><th>Giro</th></tr></thead><tbody>${l}</tbody></table></div>`);
   }
   if (tipo==='inadimplencia') {
@@ -3155,8 +3155,8 @@ window.verPedido = id => {
     '<td>' + (i+1) + '</td>' +
     '<td>' + it.produto + '</td>' +
     '<td style="text-align:center;">' + it.qty + '</td>' +
-    '<td style="text-align:right;">R$ ' + Number(it.preco).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td>' +
-    '<td style="text-align:right;">R$ ' + Number(it.qty*it.preco).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td>' +
+    '<td style="text-align:right;">R$ ' + Number(parseFloat(it.preco)||0).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td>' +
+    '<td style="text-align:right;">R$ ' + Number((parseFloat(it.qty)||0)*(parseFloat(it.preco)||0)).toLocaleString('pt-BR',{minimumFractionDigits:2}) + '</td>' +
     '</tr>'
   ).join('');
 
@@ -3201,7 +3201,7 @@ window.abrirEmissaoNF = id => {
 
   // Montar dados do pedido formatados
   const itensTexto = (p.itens||[]).map((it,i) =>
-    `  ${i+1}. ${it.produto} — Qtd: ${it.qty} | Unit: R$ ${Number(it.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})} | Total: R$ ${Number(it.qty*it.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
+    `  ${i+1}. ${it.produto} — Qtd: ${it.qty} | Unit: R$ ${Number(parseFloat(it.preco)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})} | Total: R$ ${Number((parseFloat(it.qty)||0)*(parseFloat(it.preco)||0)).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
   ).join('\n');
 
   const dados = [
