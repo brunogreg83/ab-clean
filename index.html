@@ -1261,7 +1261,7 @@ const R$     = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDi
 const fmtDt  = s => { if(!s) return '—'; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; };
 const today  = () => new Date().toISOString().split('T')[0];
 const daysTo = s => Math.round((new Date(s) - new Date(today())) / 86400000);
-const totPed = p => (p.itens||[]).reduce((s,i) => s + i.qty * i.preco, 0);
+const totPed = p => (p.itens||[]).reduce((s,i) => s + (parseFloat(i.qty)||0) * (parseFloat(i.preco)||0), 0);
 const sit    = (e,m) => e <= 0 || e < m * 0.5 ? 'Crítico' : e < m ? 'Baixo' : 'OK';
 const stFin  = s => { const d=daysTo(s); return d<0?'Vencido':d<=3?'Pendente':'No prazo'; };
 
