@@ -833,9 +833,50 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
         <input class="form-input" id="pag-forn" placeholder="Digite ou selecione..." list="pag-forn-list" autocomplete="off">
         <datalist id="pag-forn-list"></datalist>
       </div>
-      <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-input" type="text" inputmode="decimal" id="pag-val"></div>
-      <div class="form-group"><label class="form-label">Vencimento</label><input class="form-input" type="date" id="pag-venc"></div>
-      <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="pag-desc"></div>
+      <div class="form-group"><label class="form-label">Valor (R$)</label>
+        <input class="form-input" type="text" inputmode="decimal" id="pag-val">
+      </div>
+      <div class="form-group"><label class="form-label">Primeiro vencimento</label>
+        <input class="form-input" type="date" id="pag-venc">
+      </div>
+      <div class="form-group"><label class="form-label">Descrição</label>
+        <input class="form-input" id="pag-desc">
+      </div>
+
+      <!-- Recorrência -->
+      <div style="border-top:1px solid #f0f0ec;margin-top:6px;padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <input type="checkbox" id="pag-recorrente" onchange="toggleRecorrencia()" style="width:16px;height:16px;cursor:pointer;accent-color:#1D9E75;">
+          <label for="pag-recorrente" style="font-size:13px;font-weight:500;cursor:pointer;">Despesa recorrente</label>
+        </div>
+        <div id="pag-recorrencia-opts" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Periodicidade</label>
+            <select class="form-input" id="pag-periodo">
+              <option value="mensal">Mensal</option>
+              <option value="quinzenal">Quinzenal (a cada 15 dias)</option>
+              <option value="semanal">Semanal</option>
+              <option value="bimestral">Bimestral (a cada 2 meses)</option>
+              <option value="trimestral">Trimestral (a cada 3 meses)</option>
+              <option value="semestral">Semestral (a cada 6 meses)</option>
+              <option value="anual">Anual</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Número de parcelas</label>
+            <select class="form-input" id="pag-parcelas">
+              <option value="0">Indeterminado (gerar 12 meses)</option>
+              <option value="2">2 parcelas</option>
+              <option value="3">3 parcelas</option>
+              <option value="4">4 parcelas</option>
+              <option value="6">6 parcelas</option>
+              <option value="12">12 parcelas</option>
+              <option value="24">24 parcelas</option>
+            </select>
+          </div>
+          <div id="pag-recorrencia-preview" style="background:#f5f5f3;border-radius:8px;padding:10px 12px;font-size:12px;color:#666;"></div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-ghost" onclick="closeModal('modal-pagar')">Cancelar</button>
@@ -962,6 +1003,19 @@ window.mobGoTo = function(id) {
   // FAB: mostrar só em Vendas
   const fab = document.getElementById('mob-fab');
   if (fab) fab.style.display = id === 'vendas' ? 'flex' : 'none';
+
+  // redesenhar gráficos ao navegar
+  if (id === 'financeiro') {
+    const tR = D.receber.reduce((s,r)=>s+r.valor,0);
+    const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
+    setTimeout(() => desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tR, tP), 30);
+  }
+  if (id === 'dashboard') {
+    const tR = D.receber.reduce((s,r)=>s+r.valor,0);
+    const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
+    setTimeout(() => desenharRxD('rxd-chart','rxd-legenda','dash-saldo-badge', tR, tP), 30);
+    setTimeout(desenharGrafico, 60);
+  }
 
   // salvar tela para restaurar após refresh
   sessionStorage.setItem('abc_tela', id);
@@ -1811,19 +1865,96 @@ window.atualizarReceber = async id => {
 
 window.delPagar = async id => { await del('pagar', id); };
 
+// ── Recorrência ───────────────────────────────────────────────────────────
+window.toggleRecorrencia = () => {
+  const ativo = document.getElementById('pag-recorrente').checked;
+  document.getElementById('pag-recorrencia-opts').style.display = ativo ? 'block' : 'none';
+  if (ativo) atualizarPreviewRecorrencia();
+};
+
+// Gera as datas de vencimento conforme periodicidade
+function gerarDatasRecorrencia(dataInicio, periodo, qtd) {
+  const datas = [];
+  let d = new Date(dataInicio + 'T12:00:00');
+  const total = qtd > 0 ? qtd : 12;
+  for (let i = 0; i < total; i++) {
+    datas.push(d.toISOString().split('T')[0]);
+    const dd = new Date(d);
+    switch(periodo) {
+      case 'semanal':    dd.setDate(dd.getDate() + 7);    break;
+      case 'quinzenal':  dd.setDate(dd.getDate() + 15);   break;
+      case 'mensal':     dd.setMonth(dd.getMonth() + 1);  break;
+      case 'bimestral':  dd.setMonth(dd.getMonth() + 2);  break;
+      case 'trimestral': dd.setMonth(dd.getMonth() + 3);  break;
+      case 'semestral':  dd.setMonth(dd.getMonth() + 6);  break;
+      case 'anual':      dd.setFullYear(dd.getFullYear() + 1); break;
+    }
+    d = dd;
+  }
+  return datas;
+}
+
+function atualizarPreviewRecorrencia() {
+  const venc    = document.getElementById('pag-venc').value;
+  const periodo = document.getElementById('pag-periodo').value;
+  const qtd     = +document.getElementById('pag-parcelas').value;
+  const prev    = document.getElementById('pag-recorrencia-preview');
+  if (!venc || !prev) return;
+  const datas = gerarDatasRecorrencia(venc, periodo, qtd);
+  const nomes = { semanal:'Semanal', quinzenal:'Quinzenal', mensal:'Mensal',
+    bimestral:'Bimestral', trimestral:'Trimestral', semestral:'Semestral', anual:'Anual' };
+  prev.innerHTML = '<b>' + nomes[periodo] + ' · ' + datas.length + ' lançamentos</b><br>' +
+    datas.slice(0,4).map(d => fmtDt(d)).join(' → ') +
+    (datas.length > 4 ? ' → ...' : '');
+}
+
+// escutar mudanças nos campos para atualizar preview
+document.addEventListener('change', e => {
+  if (['pag-periodo','pag-parcelas','pag-venc'].includes(e.target.id)) {
+    if (document.getElementById('pag-recorrente')?.checked) atualizarPreviewRecorrencia();
+  }
+});
+
 window.salvarPagar = async () => {
-  const fornecedor = document.getElementById('pag-forn').value.trim();
-  const valor      = parseFloat(document.getElementById('pag-val').value) || 0;
-  const vencimento = document.getElementById('pag-venc').value;
-  const desc       = document.getElementById('pag-desc').value;
+  const fornecedor  = document.getElementById('pag-forn').value.trim();
+  const valor       = parseFloat(document.getElementById('pag-val').value) || 0;
+  const vencimento  = document.getElementById('pag-venc').value;
+  const desc        = document.getElementById('pag-desc').value;
+  const recorrente  = document.getElementById('pag-recorrente').checked;
+
   if (!fornecedor) { toast('Informe o fornecedor.'); return; }
   if (!valor)      { toast('Informe o valor.'); return; }
-  await add('pagar', { fornecedor, valor, vencimento, desc });
-  document.getElementById('pag-forn').value = '';
-  document.getElementById('pag-val').value  = '';
-  document.getElementById('pag-desc').value = '';
-  closeModal('modal-pagar');
-  toast('✅ Conta a pagar lançada!');
+  if (!vencimento) { toast('Informe o vencimento.'); return; }
+
+  if (recorrente) {
+    const periodo = document.getElementById('pag-periodo').value;
+    const qtd     = +document.getElementById('pag-parcelas').value;
+    const datas   = gerarDatasRecorrencia(vencimento, periodo, qtd);
+    const total   = datas.length;
+    const btn     = document.querySelector('#modal-pagar .btn-primary');
+    btn.textContent = 'Salvando...'; btn.disabled = true;
+    for (let i = 0; i < datas.length; i++) {
+      const sufixo = total > 1 ? ` (${i+1}/${total})` : '';
+      await add('pagar', {
+        fornecedor, valor, vencimento: datas[i],
+        desc: desc + sufixo,
+        recorrente: true, periodo, parcela: i+1, total_parcelas: total
+      });
+    }
+    btn.textContent = 'Salvar'; btn.disabled = false;
+    closeModal('modal-pagar');
+    toast(`✅ ${total} lançamento(s) recorrente(s) criado(s)!`);
+  } else {
+    await add('pagar', { fornecedor, valor, vencimento, desc });
+    closeModal('modal-pagar');
+    toast('✅ Conta a pagar lançada!');
+  }
+
+  // limpar campos
+  ['pag-forn','pag-val','pag-desc'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('pag-recorrente').checked = false;
+  document.getElementById('pag-recorrencia-opts').style.display = 'none';
+  document.getElementById('pag-recorrencia-preview').innerHTML = '';
 };
 window.editPagar = id => {
   const p = D.pagar.find(x => x.id === id);
@@ -1870,7 +2001,8 @@ function renderFinanceiro() {
     || '<tr><td colspan="5"><div class="empty-state">Nenhum título.</div></td></tr>';
 
   document.getElementById('tabela-pagar').innerHTML = D.pagar.map(p => `<tr>
-    <td>${p.fornecedor}</td><td>${fmtDt(p.vencimento)}</td><td>${R$(p.valor)}</td>
+    <td>${p.fornecedor}${p.recorrente ? ' <span title="Recorrente · ' + (p.parcela||'') + '/' + (p.total_parcelas||'') + '" style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:10px;margin-left:4px;">🔄 ' + (p.parcela||'') + '/' + (p.total_parcelas||'?') + '</span>' : ''}</td>
+    <td>${fmtDt(p.vencimento)}</td><td>${R$(p.valor)}</td>
     <td>${badge(stFin(p.vencimento))}</td>
     <td><div class="td-actions">
       <button class="btn-edit" onclick="editPagar('${p.id}')">Editar</button>
@@ -3399,8 +3531,19 @@ window.goTo = (id, btn) => {
   document.getElementById('screen-' + id).classList.add('active');
   btn.classList.add('active');
   document.getElementById('page-title').textContent = titles[id];
-  // salvar tela ativa para restaurar após refresh
   sessionStorage.setItem('abc_tela', id);
+  // redesenhar gráficos que dependem de visibilidade
+  if (id === 'financeiro') {
+    const tR = D.receber.reduce((s,r)=>s+r.valor,0);
+    const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
+    setTimeout(() => desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tR, tP), 30);
+  }
+  if (id === 'dashboard') {
+    const tR = D.receber.reduce((s,r)=>s+r.valor,0);
+    const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
+    setTimeout(() => desenharRxD('rxd-chart','rxd-legenda','dash-saldo-badge', tR, tP), 30);
+    setTimeout(desenharGrafico, 60);
+  }
 };
 
 function renderAll() {
