@@ -2571,14 +2571,6 @@ function renderCompras() {
         <button class="btn-primary" style="font-size:12px;padding:5px 12px;" onclick="abrirOCProd('${p.nome}')">Comprar</button></div>`).join('')
     : '<div class="empty-state" style="padding:16px;">Nenhuma reposição necessária.</div>';
 
-  const fors = D.fornecedores.length ? D.fornecedores : [];
-  document.getElementById('cmp-forn').innerHTML = fors.length
-    ? fors.map(f=>`<div class="stat-row">
-        <span class="stat-key"><b>${f.nome}</b>${f.contato?' · '+f.contato:''}</span>
-        ${badge(f.status)}
-      </div>`).join('')
-    : '<div class="empty-state">Nenhum fornecedor cadastrado.</div>';
-
   document.getElementById('tabela-compras').innerHTML = [...D.ordens]
     .sort((a,b)=>(b.data||'').localeCompare(a.data||''))
     .map(o => {
