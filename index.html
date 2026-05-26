@@ -580,9 +580,9 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <div class="modal-header"><span class="modal-header-title">Novo Fornecedor</span><span class="modal-drag-hint"><i class="ti ti-arrows-move"></i> mover</span></div>
     <div class="modal-body">
       <div class="form-group"><label class="form-label">Razão social</label><input class="form-input" id="forn-nome" placeholder="Ex: Química SP Ltda"></div>
-      <div class="form-group"><label class="form-label">CNPJ</label><input class="form-input" id="forn-cnpj" placeholder="00.000.000/0001-00"></div>
+      <div class="form-group"><label class="form-label">CNPJ</label><input class="form-input" id="forn-cnpj" placeholder="00.000.000/0001-00" oninput="this.value=maskCNPJ(this.value)"></div>
       <div class="form-group"><label class="form-label">Nome do contato</label><input class="form-input" id="forn-contato" placeholder="Ex: João Silva"></div>
-      <div class="form-group"><label class="form-label">Telefone / WhatsApp</label><input class="form-input" id="forn-tel" placeholder="(43) 99999-9999"></div>
+      <div class="form-group"><label class="form-label">Telefone / WhatsApp</label><input class="form-input" id="forn-tel" placeholder="(43) 99999-9999" oninput="this.value=maskTel(this.value)"></div>
       <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="forn-email" type="email" placeholder="contato@fornecedor.com"></div>
       <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="forn-endereco" placeholder="Rua, número, bairro"></div>
       <div class="form-group"><label class="form-label">Cidade / Estado</label><input class="form-input" id="forn-cidade" placeholder="Ex: São Paulo / SP"></div>
@@ -792,7 +792,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     <div class="modal-header"><span class="modal-header-title">Novo Cliente</span><span class="modal-drag-hint"><i class="ti ti-arrows-move"></i> mover</span></div>
     <div class="modal-body">
       <div class="form-group"><label class="form-label">Nome / Razão social</label><input class="form-input" id="cl-nome"></div>
-    <div class="form-group"><label class="form-label">CNPJ</label><input class="form-input" id="cl-cnpj" placeholder="00.000.000/0001-00"></div>
+    <div class="form-group"><label class="form-label">CNPJ</label><input class="form-input" id="cl-cnpj" placeholder="00.000.000/0001-00" oninput="this.value=maskCNPJ(this.value)"></div>
     <div class="form-group"><label class="form-label">Inscrição Estadual</label><input class="form-input" id="cl-ie" placeholder="Ex: 123.456.789-00 ou ISENTO"></div>
     <div class="form-group"><label class="form-label">Segmento</label>
       <select class="form-input" id="cl-seg">
@@ -811,7 +811,8 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
       </select>
     </div>
     <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="cl-email" type="email"></div>
-    <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="cl-tel"></div>
+    <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="cl-tel" placeholder="(43) 99999-9999" oninput="this.value=maskTel(this.value)"></div>
+    <div class="form-group"><label class="form-label">Responsável por compras</label><input class="form-input" id="cl-resp" placeholder="Ex: Maria Silva"></div>
     <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="cl-endereco" placeholder="Rua, número, bairro"></div>
     <div class="form-group"><label class="form-label">Cidade / Estado</label><input class="form-input" id="cl-cidade" placeholder="Ex: Londrina / PR"></div>
     <div class="form-group"><label class="form-label">CEP</label><input class="form-input" id="cl-cep" placeholder="00000-000"></div>
@@ -1188,6 +1189,48 @@ document.addEventListener('wheel', function(e) {
 
 window.ocItens = []; // estado global dos itens da OC
 window.pitens  = []; // estado global dos itens do pedido
+
+// ── Máscaras de formatação automática ─────────────────────────────────────
+function maskCNPJ(v) {
+  v = v.replace(/\D/g,'').slice(0,14);
+  if (v.length <= 2)  return v;
+  if (v.length <= 5)  return v.slice(0,2)+'.'+v.slice(2);
+  if (v.length <= 8)  return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);
+  if (v.length <= 12) return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'/'+v.slice(8);
+  return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'/'+v.slice(8,12)+'-'+v.slice(12,14);
+}
+
+function maskTel(v) {
+  v = v.replace(/\D/g,'').slice(0,11);
+  if (v.length <= 2)  return '(' + v;
+  if (v.length <= 6)  return '('+v.slice(0,2)+') '+v.slice(2);
+  if (v.length <= 10) return '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6);
+  return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7,11);
+}
+
+function applyMask(el, fn) {
+  el.addEventListener('input', function() {
+    const pos = this.selectionStart;
+    const prev = this.value.length;
+    this.value = fn(this.value);
+    const diff = this.value.length - prev;
+    this.setSelectionRange(pos + diff, pos + diff);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Clientes
+  const clCnpj = document.getElementById('cl-cnpj');
+  const clTel  = document.getElementById('cl-tel');
+  if (clCnpj) applyMask(clCnpj, maskCNPJ);
+  if (clTel)  applyMask(clTel,  maskTel);
+
+  // Fornecedores
+  const foTel  = document.getElementById('forn-tel');
+  const foCnpj = document.getElementById('forn-cnpj');
+  if (foCnpj) applyMask(foCnpj, maskCNPJ);
+  if (foTel)  applyMask(foTel,  maskTel);
+});
 
 // ── Máscaras de CNPJ e Telefone ───────────────────────────────────────────
 function maskCNPJ(v) {
@@ -1746,6 +1789,7 @@ window.salvarCliente = async () => {
     segmento:  document.getElementById('cl-seg').value,
     email:     document.getElementById('cl-email').value,
     tel:       document.getElementById('cl-tel').value,
+    resp:      document.getElementById('cl-resp').value,
     endereco:  document.getElementById('cl-endereco').value,
     cidade:    document.getElementById('cl-cidade').value,
     cep:       document.getElementById('cl-cep').value,
@@ -1753,7 +1797,7 @@ window.salvarCliente = async () => {
     status:    document.getElementById('cl-status').value,
   });
   closeModal('modal-cliente');
-  ['cl-nome','cl-cnpj','cl-ie','cl-email','cl-tel','cl-endereco','cl-cidade','cl-cep','cl-obs'].forEach(id => document.getElementById(id).value = '');
+  ['cl-nome','cl-cnpj','cl-ie','cl-email','cl-tel','cl-resp','cl-endereco','cl-cidade','cl-cep','cl-obs'].forEach(id => document.getElementById(id).value = '');
   toast('✅ Cliente cadastrado no Firebase!');
 };
 window.delCliente = async id => { if(!confirm('Excluir cliente?')) return; await del('clientes',id); toast('Cliente excluído.'); };
@@ -1785,6 +1829,7 @@ window.atualizarCliente = async id => {
     segmento:  document.getElementById('cl-seg').value,
     email:     document.getElementById('cl-email').value,
     tel:       document.getElementById('cl-tel').value,
+    resp:      document.getElementById('cl-resp').value,
     endereco:  document.getElementById('cl-endereco').value,
     cidade:    document.getElementById('cl-cidade').value,
     cep:       document.getElementById('cl-cep').value,
@@ -1842,6 +1887,7 @@ window.verCliente = id => {
       <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">CNPJ</div><div style="font-size:13px;font-weight:500;">${c.cnpj||'—'}</div></div>
       <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Inscrição Estadual</div><div style="font-size:13px;font-weight:500;">${c.ie||'—'}</div></div>
       <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Telefone</div><div style="font-size:13px;font-weight:500;">${c.tel||'—'}</div></div>
+      <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Resp. compras</div><div style="font-size:13px;font-weight:500;">${c.resp||'—'}</div></div>
       <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Email</div><div style="font-size:13px;font-weight:500;">${c.email||'—'}</div></div>
       <div><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">CEP</div><div style="font-size:13px;font-weight:500;">${c.cep||'—'}</div></div>
       <div style="grid-column:1/-1;"><div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Endereço</div><div style="font-size:13px;font-weight:500;">${[c.endereco,c.cidade].filter(Boolean).join(' — ')||'—'}</div></div>
@@ -1868,6 +1914,7 @@ window.copiarCliente = () => {
     `CNPJ:     ${c.cnpj     || '—'}`,
     `Segmento: ${c.segmento || '—'}`,
     `Telefone: ${c.tel      || '—'}`,
+    `Resp. compras: ${c.resp || '—'}`,
     `Email:    ${c.email    || '—'}`,
     `Endereço: ${c.endereco || '—'}`,
     `Cidade:   ${c.cidade   || '—'}`,
@@ -3101,6 +3148,7 @@ function buildPedidoHtml(p, cli, cod, tot, itensRows) {
 '    <div class="field"><div class="fl">Segmento</div><div class="fv">' + (cli.segmento || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Email</div><div class="fv">' + (cli.email || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Telefone</div><div class="fv">' + (cli.tel || '—') + '</div></div>\n' +
+'    <div class="field"><div class="fl">Resp. compras</div><div class="fv">' + (cli.resp || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Endere\u00e7o</div><div class="fv">' + (cli.endereco || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">Cidade / Estado</div><div class="fv">' + (cli.cidade || '—') + '</div></div>\n' +
 '    <div class="field"><div class="fl">CEP</div><div class="fv">' + (cli.cep || '—') + '</div></div>\n' +
