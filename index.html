@@ -421,8 +421,12 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
         </div>
         <div class="two-col">
           <div class="card">
-            <div class="section-title">Contas a receber</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+              <div class="section-title" style="margin-bottom:0;" id="receber-titulo">Contas a receber</div>
+              <select id="receber-mes-sel" onchange="filtrarReceberMes()" style="border:1px solid #e8e7e0;border-radius:8px;padding:4px 10px;font-size:12px;color:#555;background:#fff;cursor:pointer;outline:none;"></select>
+            </div>
             <div class="table-wrap" style="margin:0;"><table><thead><tr><th>Cliente</th><th>Vencimento</th><th>Valor</th><th>Status</th><th></th></tr></thead><tbody id="tabela-receber"></tbody></table></div>
+            <div id="receber-total-mes" style="text-align:right;padding:10px 14px 0;font-size:13px;color:#888;"></div>
             <button class="btn-primary" style="margin-top:12px;" onclick="openModal('modal-receber')"><i class="ti ti-plus"></i> Lançar título</button>
           </div>
           <div class="card">
@@ -1024,7 +1028,7 @@ window.mobGoTo = function(id) {
       const rxd = calcRxDMesAtual(); desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', rxd.tR, rxd.tP);
       const sel = document.getElementById('fin-mes-saldo');
       if (sel && sel.options.length === 0) renderFinanceiro();
-      else if (sel) atualizarSaldoMes();
+      else { if (sel) atualizarSaldoMes(); filtrarReceberMes(); filtrarPagarMes(); }
     }, 30);
   }
   if (id === 'dashboard') {
@@ -2038,15 +2042,25 @@ function renderFinanceiro() {
     }
   }
 
-  // tabela contas a receber — sem filtro
-  document.getElementById('tabela-receber').innerHTML = D.receber.map(r => `<tr>
-    <td>${r.cliente}</td><td>${fmtDt(r.vencimento)}</td><td>${R$(r.valor)}</td>
-    <td>${badge(stFin(r.vencimento))}</td>
-    <td><div class="td-actions">
-      <button class="btn-edit" onclick="editReceber('${r.id}')">Editar</button>
-      <button class="btn-danger" onclick="delReceber('${r.id}')">✕</button>
-    </div></td></tr>`).join('')
-    || '<tr><td colspan="5"><div class="empty-state">Nenhum título.</div></td></tr>';
+  // popular seletor de meses de Contas a Receber
+  const selReceber = document.getElementById('receber-mes-sel');
+  if (selReceber && selReceber.options.length === 0) {
+    const now2 = new Date();
+    const meses2 = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now2.getFullYear(), now2.getMonth() + i, 1);
+      const ym = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      const opt = document.createElement('option');
+      opt.value = ym;
+      opt.textContent = meses2[d.getMonth()] + '/' + d.getFullYear();
+      if (i === 0) opt.selected = true;
+      selReceber.appendChild(opt);
+    }
+  }
+
+  // tabela contas a receber — filtrada pelo mês selecionado
+  filtrarReceberMes();
 
   // tabela contas a pagar — filtrada pelo mês selecionado
   filtrarPagarMes();
@@ -2054,6 +2068,35 @@ function renderFinanceiro() {
   const { tR: tRfin, tP: tPfin } = calcRxDMesAtual();
   setTimeout(() => desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tRfin, tPfin), 0);
 }
+
+window.filtrarReceberMes = () => {
+  const selReceber = document.getElementById('receber-mes-sel');
+  if (!selReceber) return;
+  const ym = selReceber.value;
+  const [ano, mes] = ym.split('-').map(Number);
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                 'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  const titulo = document.getElementById('receber-titulo');
+  if (titulo) titulo.textContent = 'Contas a receber — ' + meses[mes-1] + '/' + ano;
+
+  const filtradas = D.receber.filter(r => r.vencimento && r.vencimento.startsWith(ym));
+  const total = filtradas.reduce((s,r) => s+r.valor, 0);
+
+  document.getElementById('tabela-receber').innerHTML = filtradas.map(r => `<tr>
+    <td>${r.cliente}</td><td>${fmtDt(r.vencimento)}</td><td>${R$(r.valor)}</td>
+    <td>${badge(stFin(r.vencimento))}</td>
+    <td><div class="td-actions">
+      <button class="btn-edit" onclick="editReceber('${r.id}')">Editar</button>
+      <button class="btn-danger" onclick="delReceber('${r.id}')">✕</button>
+    </div></td></tr>`).join('')
+    || '<tr><td colspan="5"><div class="empty-state">Nenhum título em ' + meses[mes-1] + '/' + ano + '.</div></td></tr>';
+
+  const totEl = document.getElementById('receber-total-mes');
+  if (totEl) totEl.innerHTML = filtradas.length
+    ? 'Total ' + meses[mes-1] + ': <b style="color:#1D9E75;">' + R$(total) + '</b>'
+    : '';
+};
 
 window.filtrarPagarMes = () => {
   const selPagar = document.getElementById('pagar-mes-sel');
@@ -3660,7 +3703,7 @@ window.goTo = (id, btn) => {
       const rxd = calcRxDMesAtual(); desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', rxd.tR, rxd.tP);
       const sel = document.getElementById('fin-mes-saldo');
       if (sel && sel.options.length === 0) renderFinanceiro();
-      else if (sel) atualizarSaldoMes();
+      else { if (sel) atualizarSaldoMes(); filtrarReceberMes(); filtrarPagarMes(); }
     }, 30);
   }
   if (id === 'dashboard') {
