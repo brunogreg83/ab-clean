@@ -411,6 +411,15 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
       <!-- FINANCEIRO -->
       <div class="screen" id="screen-financeiro">
         <div class="three-col" id="fin-kpis"></div>
+
+        <!-- Saldo Projetado por mês -->
+        <div class="card" style="margin-bottom:22px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <div class="section-title" style="margin-bottom:0;" id="fin-saldo-titulo">Saldo Projetado — Maio/2026</div>
+            <select id="fin-mes-saldo" onchange="atualizarSaldoMes()" style="border:1px solid #e8e7e0;border-radius:8px;padding:4px 10px;font-size:12px;color:#555;background:#fff;cursor:pointer;outline:none;"></select>
+          </div>
+          <div id="fin-saldo-mes" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;"></div>
+        </div>
         <div class="two-col">
           <div class="card">
             <div class="section-title">Contas a receber</div>
@@ -1008,7 +1017,12 @@ window.mobGoTo = function(id) {
   if (id === 'financeiro') {
     const tR = D.receber.reduce((s,r)=>s+r.valor,0);
     const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
-    setTimeout(() => desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tR, tP), 30);
+    setTimeout(() => {
+      desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tR, tP);
+      const sel = document.getElementById('fin-mes-saldo');
+      if (sel && sel.options.length === 0) renderFinanceiro();
+      else if (sel) atualizarSaldoMes();
+    }, 30);
   }
   if (id === 'dashboard') {
     const tR = D.receber.reduce((s,r)=>s+r.valor,0);
@@ -1984,12 +1998,30 @@ window.atualizarPagar = async id => {
 
 function renderFinanceiro() {
   const tR = D.receber.reduce((s,r) => s+r.valor, 0);
-  const tP = D.pagar.reduce((s,p) => s+p.valor, 0);
+  const tP = D.pagar.reduce((s,p) => s+p.valor,   0);
   const sl = tR - tP;
   document.getElementById('fin-kpis').innerHTML = `
-    <div class="kpi-card"><div class="kpi-label">A receber</div><div class="kpi-value">${R$(tR)}</div></div>
-    <div class="kpi-card"><div class="kpi-label">A pagar</div><div class="kpi-value">${R$(tP)}</div></div>
-    <div class="kpi-card"><div class="kpi-label">Saldo projetado</div><div class="kpi-value" style="color:${sl>=0?'#1D9E75':'#D85A30'}">${R$(sl)}</div></div>`;
+    <div class="kpi-card"><div class="kpi-label">A receber (total)</div><div class="kpi-value">${R$(tR)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">A pagar (total)</div><div class="kpi-value">${R$(tP)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Saldo geral</div><div class="kpi-value" style="color:${sl>=0?'#1D9E75':'#D85A30'}">${R$(sl)}</div></div>`;
+
+  // popular seletor de meses (mês atual + próximos 11)
+  const sel = document.getElementById('fin-mes-saldo');
+  if (sel && sel.options.length === 0) {
+    const now = new Date();
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                   'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const ym = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      const opt = document.createElement('option');
+      opt.value = ym;
+      opt.textContent = meses[d.getMonth()] + '/' + d.getFullYear();
+      if (i === 0) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+  atualizarSaldoMes();
 
   document.getElementById('tabela-receber').innerHTML = D.receber.map(r => `<tr>
     <td>${r.cliente}</td><td>${fmtDt(r.vencimento)}</td><td>${R$(r.valor)}</td>
@@ -2010,9 +2042,59 @@ function renderFinanceiro() {
     </div></td></tr>`).join('')
     || '<tr><td colspan="5"><div class="empty-state">Nenhuma conta.</div></td></tr>';
 
-  // Gráfico Receitas × Despesas no Financeiro
   setTimeout(() => desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tR, tP), 0);
 }
+
+window.atualizarSaldoMes = () => {
+  const sel = document.getElementById('fin-mes-saldo');
+  if (!sel) return;
+  const ym = sel.value; // ex: "2026-05"
+  const [ano, mes] = ym.split('-').map(Number);
+
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                 'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const nomeMes = meses[mes-1] + '/' + ano;
+
+  // Título
+  const titulo = document.getElementById('fin-saldo-titulo');
+  if (titulo) titulo.textContent = 'Saldo Projetado — ' + nomeMes;
+
+  // Filtrar receitas e despesas do mês selecionado
+  const recMes = D.receber.filter(r => r.vencimento && r.vencimento.startsWith(ym));
+  const pagMes = D.pagar.filter(p => p.vencimento && p.vencimento.startsWith(ym));
+  const tRecMes = recMes.reduce((s,r) => s+r.valor, 0);
+  const tPagMes = pagMes.reduce((s,p) => s+p.valor, 0);
+  const saldoMes = tRecMes - tPagMes;
+
+  // Listar lançamentos do mês
+  const recItens = recMes.map(r =>
+    `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0ec;font-size:12px;">
+      <span style="color:#3B6D11;">↑ ${r.cliente}</span>
+      <span style="font-weight:500;">${R$(r.valor)}</span>
+    </div>`).join('');
+  const pagItens = pagMes.map(p =>
+    `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0ec;font-size:12px;">
+      <span style="color:#A32D2D;">↓ ${p.fornecedor}</span>
+      <span style="font-weight:500;">${R$(p.valor)}</span>
+    </div>`).join('');
+
+  document.getElementById('fin-saldo-mes').innerHTML = `
+    <div class="kpi-card" style="background:${saldoMes>=0?'#EAF3DE':'#FCEBEB'};">
+      <div class="kpi-label" style="color:${saldoMes>=0?'#3B6D11':'#A32D2D'};">Saldo Projetado</div>
+      <div class="kpi-value" style="color:${saldoMes>=0?'#1D9E75':'#D85A30'}">${R$(saldoMes)}</div>
+      <div style="font-size:11px;color:#999;margin-top:4px;">${nomeMes}</div>
+    </div>
+    <div class="kpi-card" style="background:#f5f5f3;">
+      <div class="kpi-label" style="color:#3B6D11;">↑ Receitas previstas</div>
+      <div class="kpi-value" style="color:#1D9E75;">${R$(tRecMes)}</div>
+      <div style="margin-top:8px;max-height:120px;overflow-y:auto;">${recItens || '<div style="font-size:12px;color:#bbb;">Nenhum lançamento</div>'}</div>
+    </div>
+    <div class="kpi-card" style="background:#f5f5f3;">
+      <div class="kpi-label" style="color:#A32D2D;">↓ Despesas previstas</div>
+      <div class="kpi-value" style="color:#D85A30;">${R$(tPagMes)}</div>
+      <div style="margin-top:8px;max-height:120px;overflow-y:auto;">${pagItens || '<div style="font-size:12px;color:#bbb;">Nenhum lançamento</div>'}</div>
+    </div>`;
+};
 
 // ── Fornecedores ───────────────────────────────────────────────────────────
 window.salvarFornecedor = async () => {
@@ -3531,7 +3613,12 @@ window.goTo = (id, btn) => {
   if (id === 'financeiro') {
     const tR = D.receber.reduce((s,r)=>s+r.valor,0);
     const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
-    setTimeout(() => desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tR, tP), 30);
+    setTimeout(() => {
+      desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tR, tP);
+      const sel = document.getElementById('fin-mes-saldo');
+      if (sel && sel.options.length === 0) renderFinanceiro();
+      else if (sel) atualizarSaldoMes();
+    }, 30);
   }
   if (id === 'dashboard') {
     const tR = D.receber.reduce((s,r)=>s+r.valor,0);
