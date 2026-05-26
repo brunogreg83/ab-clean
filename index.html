@@ -426,8 +426,12 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
             <button class="btn-primary" style="margin-top:12px;" onclick="openModal('modal-receber')"><i class="ti ti-plus"></i> Lançar título</button>
           </div>
           <div class="card">
-            <div class="section-title">Contas a pagar</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+              <div class="section-title" style="margin-bottom:0;" id="pagar-titulo">Contas a pagar</div>
+              <select id="pagar-mes-sel" onchange="filtrarPagarMes()" style="border:1px solid #e8e7e0;border-radius:8px;padding:4px 10px;font-size:12px;color:#555;background:#fff;cursor:pointer;outline:none;"></select>
+            </div>
             <div class="table-wrap" style="margin:0;"><table><thead><tr><th>Fornecedor</th><th>Vencimento</th><th>Valor</th><th>Status</th><th></th></tr></thead><tbody id="tabela-pagar"></tbody></table></div>
+            <div id="pagar-total-mes" style="text-align:right;padding:10px 14px 0;font-size:13px;color:#888;"></div>
             <button class="btn-primary" style="margin-top:12px;" onclick="openModal('modal-pagar')"><i class="ti ti-plus"></i> Lançar conta</button>
           </div>
         </div>
@@ -1999,7 +2003,7 @@ function renderFinanceiro() {
   const tR = D.receber.reduce((s,r) => s+r.valor, 0);
   const tP = D.pagar.reduce((s,p) => s+p.valor,   0);
 
-  // popular seletor de meses (mês atual + próximos 11)
+  // popular seletor de meses do Saldo Projetado
   const sel = document.getElementById('fin-mes-saldo');
   if (sel && sel.options.length === 0) {
     const now = new Date();
@@ -2017,6 +2021,24 @@ function renderFinanceiro() {
   }
   atualizarSaldoMes();
 
+  // popular seletor de meses de Contas a Pagar
+  const selPagar = document.getElementById('pagar-mes-sel');
+  if (selPagar && selPagar.options.length === 0) {
+    const now = new Date();
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                   'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const ym = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      const opt = document.createElement('option');
+      opt.value = ym;
+      opt.textContent = meses[d.getMonth()] + '/' + d.getFullYear();
+      if (i === 0) opt.selected = true;
+      selPagar.appendChild(opt);
+    }
+  }
+
+  // tabela contas a receber — sem filtro
   document.getElementById('tabela-receber').innerHTML = D.receber.map(r => `<tr>
     <td>${r.cliente}</td><td>${fmtDt(r.vencimento)}</td><td>${R$(r.valor)}</td>
     <td>${badge(stFin(r.vencimento))}</td>
@@ -2026,7 +2048,28 @@ function renderFinanceiro() {
     </div></td></tr>`).join('')
     || '<tr><td colspan="5"><div class="empty-state">Nenhum título.</div></td></tr>';
 
-  document.getElementById('tabela-pagar').innerHTML = D.pagar.map(p => `<tr>
+  // tabela contas a pagar — filtrada pelo mês selecionado
+  filtrarPagarMes();
+
+  const { tR: tRfin, tP: tPfin } = calcRxDMesAtual();
+  setTimeout(() => desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tRfin, tPfin), 0);
+}
+
+window.filtrarPagarMes = () => {
+  const selPagar = document.getElementById('pagar-mes-sel');
+  if (!selPagar) return;
+  const ym = selPagar.value;
+  const [ano, mes] = ym.split('-').map(Number);
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                 'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  const titulo = document.getElementById('pagar-titulo');
+  if (titulo) titulo.textContent = 'Contas a pagar — ' + meses[mes-1] + '/' + ano;
+
+  const filtradas = D.pagar.filter(p => p.vencimento && p.vencimento.startsWith(ym));
+  const total = filtradas.reduce((s,p) => s+p.valor, 0);
+
+  document.getElementById('tabela-pagar').innerHTML = filtradas.map(p => `<tr>
     <td>${p.fornecedor}${p.recorrente ? ' <span title="Recorrente · ' + (p.parcela||'') + '/' + (p.total_parcelas||'') + '" style="font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:10px;margin-left:4px;">🔄 ' + (p.parcela||'') + '/' + (p.total_parcelas||'?') + '</span>' : ''}</td>
     <td>${fmtDt(p.vencimento)}</td><td>${R$(p.valor)}</td>
     <td>${badge(stFin(p.vencimento))}</td>
@@ -2034,11 +2077,13 @@ function renderFinanceiro() {
       <button class="btn-edit" onclick="editPagar('${p.id}')">Editar</button>
       <button class="btn-danger" onclick="delPagar('${p.id}')">✕</button>
     </div></td></tr>`).join('')
-    || '<tr><td colspan="5"><div class="empty-state">Nenhuma conta.</div></td></tr>';
+    || '<tr><td colspan="5"><div class="empty-state">Nenhuma conta em ' + meses[mes-1] + '/' + ano + '.</div></td></tr>';
 
-  const { tR: tRfin, tP: tPfin } = calcRxDMesAtual();
-  setTimeout(() => desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tRfin, tPfin), 0);
-}
+  const totEl = document.getElementById('pagar-total-mes');
+  if (totEl) totEl.innerHTML = filtradas.length
+    ? 'Total ' + meses[mes-1] + ': <b style="color:#D85A30;">' + R$(total) + '</b>'
+    : '';
+};
 
 window.atualizarSaldoMes = () => {
   const sel = document.getElementById('fin-mes-saldo');
