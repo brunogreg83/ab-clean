@@ -1392,6 +1392,20 @@ window.openModal = id => {
       fList.innerHTML = D.fornecedores.filter(f=>f.status==='Ativo').map(f=>`<option value="${f.nome}">`).join('');
     }
   }
+  if (id === 'modal-cliente') {
+    // limpar todos os campos para novo cadastro
+    ['cl-nome','cl-cnpj','cl-ie','cl-email','cl-tel','cl-resp',
+     'cl-endereco','cl-cidade','cl-cep','cl-obs'].forEach(fid => {
+      const el = document.getElementById(fid); if(el) el.value = '';
+    });
+    document.getElementById('cl-seg').value    = '';
+    document.getElementById('cl-status').value = 'Ativo';
+    // restaurar footer para "Salvar"
+    const footer = document.querySelector('#modal-cliente .modal-footer');
+    if (footer) footer.innerHTML =
+      '<button class="btn-ghost" onclick="closeModal(\'modal-cliente\')">Cancelar</button>' +
+      '<button class="btn-primary" onclick="salvarCliente()">Salvar</button>';
+  }
   document.getElementById(id).classList.add('open');
 };
 window.closeModal = id => {
