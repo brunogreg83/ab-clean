@@ -410,7 +410,6 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 
       <!-- FINANCEIRO -->
       <div class="screen" id="screen-financeiro">
-        <div class="three-col" id="fin-kpis"></div>
 
         <!-- Saldo Projetado por mês -->
         <div class="card" style="margin-bottom:22px;">
@@ -1018,7 +1017,7 @@ window.mobGoTo = function(id) {
     const tR = D.receber.reduce((s,r)=>s+r.valor,0);
     const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
     setTimeout(() => {
-      desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tR, tP);
+      const rxd = calcRxDMesAtual(); desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', rxd.tR, rxd.tP);
       const sel = document.getElementById('fin-mes-saldo');
       if (sel && sel.options.length === 0) renderFinanceiro();
       else if (sel) atualizarSaldoMes();
@@ -1027,7 +1026,7 @@ window.mobGoTo = function(id) {
   if (id === 'dashboard') {
     const tR = D.receber.reduce((s,r)=>s+r.valor,0);
     const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
-    setTimeout(() => desenharRxD('rxd-chart','rxd-legenda','dash-saldo-badge', tR, tP), 30);
+    setTimeout(() => { const rxd = calcRxDMesAtual(); desenharRxD('rxd-chart','rxd-legenda','dash-saldo-badge', rxd.tR, rxd.tP); }, 30);
     setTimeout(desenharGrafico, 60);
   }
 
@@ -1999,11 +1998,6 @@ window.atualizarPagar = async id => {
 function renderFinanceiro() {
   const tR = D.receber.reduce((s,r) => s+r.valor, 0);
   const tP = D.pagar.reduce((s,p) => s+p.valor,   0);
-  const sl = tR - tP;
-  document.getElementById('fin-kpis').innerHTML = `
-    <div class="kpi-card"><div class="kpi-label">A receber (total)</div><div class="kpi-value">${R$(tR)}</div></div>
-    <div class="kpi-card"><div class="kpi-label">A pagar (total)</div><div class="kpi-value">${R$(tP)}</div></div>
-    <div class="kpi-card"><div class="kpi-label">Saldo geral</div><div class="kpi-value" style="color:${sl>=0?'#1D9E75':'#D85A30'}">${R$(sl)}</div></div>`;
 
   // popular seletor de meses (mês atual + próximos 11)
   const sel = document.getElementById('fin-mes-saldo');
@@ -2042,7 +2036,8 @@ function renderFinanceiro() {
     </div></td></tr>`).join('')
     || '<tr><td colspan="5"><div class="empty-state">Nenhuma conta.</div></td></tr>';
 
-  setTimeout(() => desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tR, tP), 0);
+  const { tR: tRfin, tP: tPfin } = calcRxDMesAtual();
+  setTimeout(() => desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tRfin, tPfin), 0);
 }
 
 window.atualizarSaldoMes = () => {
@@ -2605,6 +2600,17 @@ function renderCompras() {
 }
 
 // ── Gráfico Receitas × Despesas ────────────────────────────────────────────
+
+// ── Receitas/Despesas do mês vigente ────────────────────────────────────────
+function calcRxDMesAtual() {
+  const ymAtual = new Date().toISOString().slice(0,7); // "2026-05"
+  const tR = D.receber.filter(r => r.vencimento && r.vencimento.startsWith(ymAtual))
+                      .reduce((s,r) => s+r.valor, 0);
+  const tP = D.pagar.filter(p => p.vencimento && p.vencimento.startsWith(ymAtual))
+                    .reduce((s,p) => s+p.valor, 0);
+  return { tR, tP };
+}
+
 function desenharRxD(containerId, legendaId, badgeId, receitas, despesas) {
   const container = document.getElementById(containerId);
   const legenda   = document.getElementById(legendaId);
@@ -2613,7 +2619,8 @@ function desenharRxD(containerId, legendaId, badgeId, receitas, despesas) {
 
   const saldo = receitas - despesas;
   if (badge) {
-    badge.textContent = 'Saldo: ' + R$(saldo);
+    const _nm = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][new Date().getMonth()];
+    badge.innerHTML = '<span style="font-size:10px;color:#aaa;margin-right:6px;">' + _nm + '</span>' + R$(saldo);
     badge.style.color = saldo >= 0 ? '#1D9E75' : '#D85A30';
   }
 
@@ -2846,8 +2853,7 @@ function renderDashboard() {
   setTimeout(desenharGrafico, 0);
 
   // Gráfico Receitas × Despesas no Dashboard
-  const tRec = D.receber.reduce((s,r)=>s+r.valor,0);
-  const tPag = D.pagar.reduce((s,p)=>s+p.valor,0);
+  const { tR: tRec, tP: tPag } = calcRxDMesAtual();
   setTimeout(() => desenharRxD('rxd-chart','rxd-legenda','dash-saldo-badge', tRec, tPag), 0);
 }
 
@@ -3614,7 +3620,7 @@ window.goTo = (id, btn) => {
     const tR = D.receber.reduce((s,r)=>s+r.valor,0);
     const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
     setTimeout(() => {
-      desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', tR, tP);
+      const rxd = calcRxDMesAtual(); desenharRxD('fin-rxd-chart','fin-rxd-legenda','fin-saldo-badge', rxd.tR, rxd.tP);
       const sel = document.getElementById('fin-mes-saldo');
       if (sel && sel.options.length === 0) renderFinanceiro();
       else if (sel) atualizarSaldoMes();
@@ -3623,7 +3629,7 @@ window.goTo = (id, btn) => {
   if (id === 'dashboard') {
     const tR = D.receber.reduce((s,r)=>s+r.valor,0);
     const tP = D.pagar.reduce((s,p)=>s+p.valor,0);
-    setTimeout(() => desenharRxD('rxd-chart','rxd-legenda','dash-saldo-badge', tR, tP), 30);
+    setTimeout(() => { const rxd = calcRxDMesAtual(); desenharRxD('rxd-chart','rxd-legenda','dash-saldo-badge', rxd.tR, rxd.tP); }, 30);
     setTimeout(desenharGrafico, 60);
   }
 };
